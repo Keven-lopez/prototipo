@@ -115,7 +115,7 @@ function el(id){ return document.getElementById(id); }
 function initShell(screenId){
   const role = getRole();
   if(!role){
-    window.location.href = 'login.html';
+    window.location.href = 'index.html';
     return;
   }
   const meta = SCREENS.find(s => s.id === screenId);
@@ -196,7 +196,7 @@ function buildSidebar(activeId, role){
 
 function logout(){
   clearSession();
-  window.location.href = 'login.html';
+  window.location.href = 'index.html';
 }
 
 /* Nota: <a> normal en vez de botón con JS, para que cada módulo sea
