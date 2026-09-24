@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pacientes — SIGH</title>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link href="css/styles.css" rel="stylesheet">
+</head>
+<body data-screen="pacientes">
+<div id="page-content">
+<div class="panel mb-3">
+          <div class="panel-head">
+            <h2>Buscar paciente</h2>
+            <button class="btn btn-sm btn-outline-secondary" onclick="openEmergencyAccess()">Acceso de emergencia fuera de mi servicio</button>
+          </div>
+          <div class="panel-body">
+            <div class="row g-2 align-items-end">
+              <div class="col-md-4">
+                <label class="form-label mb-1">Nombre o DPI</label>
+                <input class="form-control form-control-sm" placeholder="Ej. Pérez, o últimos dígitos de DPI">
+              </div>
+              <div class="col-md-3">
+                <label class="form-label mb-1">Servicio</label>
+                <select class="form-select form-select-sm">
+                  <option>Todos</option>
+                  <option>Medicina Interna</option>
+                  <option>Pediatría</option>
+                  <option>Emergencias</option>
+                </select>
+              </div>
+              <div class="col-md-2">
+                <button class="btn btn-sm w-100" style="background:var(--sigh-teal-700); color:#fff;">Buscar</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head"><h2>Pacientes con episodio activo</h2></div>
+          <div class="table-responsive">
+            <table class="table mb-0">
+              <thead>
+                <tr>
+                  <th>Paciente</th><th>DPI</th><th>Episodio</th><th>Servicio</th>
+                  <th>Ingreso</th><th>Alergias</th><th>Diagnóstico</th><th></th>
+                </tr>
+              </thead>
+              <tbody id="tbl-pacientes"></tbody>
+            </table>
+          </div>
+        </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+<script src="js/app.js"></script>
+<script>SIGH.boot('pacientes');</script>
+</body>
+</html>

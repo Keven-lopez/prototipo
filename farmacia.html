@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Farmacia — SIGH</title>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link href="css/styles.css" rel="stylesheet">
+</head>
+<body data-screen="farmacia">
+<div id="page-content">
+<div class="panel mb-3">
+          <div class="panel-head"><h2>Órdenes pendientes de dispensación</h2></div>
+          <div class="table-responsive">
+            <table class="table mb-0">
+              <thead><tr><th>Orden</th><th>Paciente</th><th>Medicamento</th><th>Lote sugerido</th><th>Estado</th><th></th></tr></thead>
+              <tbody>
+                <tr>
+                  <td class="mono">OC-3381</td><td>Juan Pérez López</td><td>Amoxicilina 500mg</td>
+                  <td><span class="badge-state st-bloqueada">L-032 · vence 30/11/2026</span></td>
+                  <td><span class="text-warning">Pendiente validación</span></td>
+                  <td><button class="btn btn-sm btn-outline-secondary" onclick="showToast('Dispensación registrada. RN-05: se validó que el lote no está vencido ni bloqueado.', 'ok')">Validar y dispensar</button></td>
+                </tr>
+                <tr>
+                  <td class="mono">OC-3379</td><td>NN-Emergencia-08</td><td>Suero fisiológico 1000ml</td>
+                  <td><span class="badge-state st-disponible">L-051 · vence 12/2027</span></td>
+                  <td><span class="text-success">Lista</span></td>
+                  <td><button class="btn btn-sm btn-outline-secondary" onclick="showToast('Dispensación registrada.', 'ok')">Validar y dispensar</button></td>
+                </tr>
+                <tr class="table-danger">
+                  <td class="mono">OC-3375</td><td>María Xitumul Son</td><td>Insulina glargina</td>
+                  <td><span class="badge-state st-bloqueada">L-010 · vencido 02/09/2026</span></td>
+                  <td><span class="text-danger fw-semibold">Bloqueada — RN-05</span></td>
+                  <td><button class="btn btn-sm btn-outline-danger" disabled title="No puede dispensarse: lote vencido">Bloqueado</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><h2>Lotes próximos a vencer</h2></div>
+          <div class="panel-body">
+            <div class="alert alert-warning py-2 px-3 mb-0" style="font-size:.82rem;">
+              RF-18 — 3 lotes vencen en los próximos 30 días (Amoxicilina L-032, Insulina L-010, Metformina L-028). Se notificó a Bodega.
+            </div>
+          </div>
+        </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+<script src="js/app.js"></script>
+<script>SIGH.boot('farmacia');</script>
+</body>
+</html>

@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Inventario — SIGH</title>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link href="css/styles.css" rel="stylesheet">
+</head>
+<body data-screen="inventario">
+<div id="page-content">
+<div class="panel mb-3">
+          <div class="panel-head">
+            <h2>Existencias por producto</h2>
+            <button class="btn btn-sm" style="background:var(--sigh-teal-700); color:#fff;" onclick="showToast('Solicitud de reabastecimiento enviada para revisión.', 'ok')">+ Solicitar reabastecimiento</button>
+          </div>
+          <div class="table-responsive">
+            <table class="table mb-0">
+              <thead><tr><th>Producto</th><th>Existencia</th><th>Mínimo</th><th>Estado</th><th>Último movimiento</th></tr></thead>
+              <tbody>
+                <tr>
+                  <td>Guantes de nitrilo (caja 100)</td><td>34</td><td>50</td>
+                  <td><span class="badge-state st-bloqueada">Bajo mínimo</span></td><td class="helper-text">Salida · Enfermería · hoy 09:12</td>
+                </tr>
+                <tr>
+                  <td>Gasas estériles 10x10</td><td>212</td><td>80</td>
+                  <td><span class="badge-state st-disponible">Normal</span></td><td class="helper-text">Entrada · Bodega · ayer</td>
+                </tr>
+                <tr>
+                  <td>Alcohol en gel 500ml</td><td>18</td><td>25</td>
+                  <td><span class="badge-state st-reservada">Próximo a mínimo</span></td><td class="helper-text">Salida · Limpieza · hoy 07:40</td>
+                </tr>
+                <tr>
+                  <td>Jeringas 5ml</td><td>640</td><td>150</td>
+                  <td><span class="badge-state st-disponible">Normal</span></td><td class="helper-text">Entrada · Bodega · hace 3 días</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <p class="helper-text mb-0">RN-06 · Toda salida de inventario identifica origen, destino, responsable y documento soporte.</p>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+<script src="js/app.js"></script>
+<script>SIGH.boot('inventario');</script>
+</body>
+</html>

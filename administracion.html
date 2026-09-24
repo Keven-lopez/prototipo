@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Administración — SIGH</title>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link href="css/styles.css" rel="stylesheet">
+</head>
+<body data-screen="administracion">
+<div id="page-content">
+<div class="panel mb-3">
+          <div class="panel-head">
+            <h2>Empleados y roles</h2>
+            <button class="btn btn-sm" style="background:var(--sigh-teal-700); color:#fff;">+ Nuevo empleado</button>
+          </div>
+          <div class="table-responsive">
+            <table class="table mb-0">
+              <thead><tr><th>Empleado</th><th>Usuario</th><th>Rol</th><th>Servicio</th><th>Estado</th><th></th></tr></thead>
+              <tbody>
+                <tr><td>Ana Beatriz Coy</td><td class="mono">acoy</td><td>Enfermería</td><td>Medicina Interna</td><td><span class="badge-state st-disponible">Activo</span></td><td><button class="btn btn-sm btn-outline-secondary" onclick="confirmCriticalAction('Cambiar el rol de Ana Beatriz Coy')">Editar rol</button></td></tr>
+                <tr><td>Dr. Luis Fernando Say</td><td class="mono">lsay</td><td>Médico</td><td>Medicina Interna</td><td><span class="badge-state st-disponible">Activo</span></td><td><button class="btn btn-sm btn-outline-secondary" onclick="confirmCriticalAction('Cambiar el rol de Luis Fernando Say')">Editar rol</button></td></tr>
+                <tr><td>Karla Ixchop</td><td class="mono">kixchop</td><td>Farmacia</td><td>Farmacia central</td><td><span class="badge-state st-fuera">Inactivo</span></td><td><button class="btn btn-sm btn-outline-secondary" disabled>Editar rol</button></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="row g-3">
+          <div class="col-lg-6">
+            <div class="panel">
+              <div class="panel-head"><h2>Catálogo de servicios</h2></div>
+              <div class="panel-body">
+                <ul class="list-group list-group-flush" style="font-size:.85rem;">
+                  <li class="list-group-item d-flex justify-content-between px-0">Medicina Interna <span class="helper-text">22 camas</span></li>
+                  <li class="list-group-item d-flex justify-content-between px-0">Pediatría <span class="helper-text">14 camas</span></li>
+                  <li class="list-group-item d-flex justify-content-between px-0">Emergencias <span class="helper-text">10 camas</span></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-6">
+            <div class="panel">
+              <div class="panel-head"><h2>Órdenes de mantenimiento</h2></div>
+              <div class="panel-body">
+                <p class="mb-2" style="font-size:.85rem;"><strong>OM-118</strong> · Ventilador quirófano 2 · Falla reportada · <span class="badge-state st-bloqueada">Fuera de servicio</span></p>
+                <p class="mb-0 helper-text">Cualquier rol operativo puede reportar una falla; solo Mantenimiento la gestiona hasta el cierre.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+<script src="js/app.js"></script>
+<script>SIGH.boot('administracion');</script>
+</body>
+</html>

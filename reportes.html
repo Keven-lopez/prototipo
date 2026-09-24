@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reportes y auditoría — SIGH</title>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link href="css/styles.css" rel="stylesheet">
+</head>
+<body data-screen="reportes">
+<div id="page-content">
+<div class="row g-3 mb-3">
+          <div class="col-md-3"><div class="kpi-card"><div class="kpi-label">Ocupación de camas</div><div class="kpi-value">78%</div><div class="kpi-delta text-success">▲ 4% vs. semana anterior</div></div></div>
+          <div class="col-md-3"><div class="kpi-card"><div class="kpi-label">Estancia promedio</div><div class="kpi-value">3.2<small style="font-size:.9rem;">d</small></div><div class="kpi-delta helper-text">Meta: 3.5 d</div></div></div>
+          <div class="col-md-3"><div class="kpi-card"><div class="kpi-label">Alertas activas</div><div class="kpi-value" style="color:var(--sigh-red);">5</div><div class="kpi-delta helper-text">2 vencimientos · 1 crítico lab. · 2 fallas</div></div></div>
+          <div class="col-md-3"><div class="kpi-card"><div class="kpi-label">Accesos denegados (24h)</div><div class="kpi-value">3</div><div class="kpi-delta helper-text">Ver bitácora</div></div></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head">
+            <h2>Bitácora de accesos y cambios</h2>
+            <span class="helper-text">RF-17 — solo inserciones, sin edición ni borrado</span>
+          </div>
+          <div class="table-responsive">
+            <table class="table mb-0">
+              <thead><tr><th>Fecha/hora</th><th>Usuario</th><th>Acción</th><th>Detalle</th><th>Resultado</th></tr></thead>
+              <tbody id="tbl-bitacora"></tbody>
+            </table>
+          </div>
+        </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+<script src="js/app.js"></script>
+<script>SIGH.boot('reportes');</script>
+</body>
+</html>

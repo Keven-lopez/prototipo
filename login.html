@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Inicio de sesión — SIGH</title>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link href="css/styles.css" rel="stylesheet">
+</head>
+<body>
+<div id="screen-login">
+
+  <div class="login-card">
+    <div class="login-side">
+      <div>
+        <div class="brand">SIGH<small>SISTEMA INTEGRAL DE GESTIÓN HOSPITALARIA</small></div>
+        <p class="mt-4 mb-0" style="font-size:.85rem; color:#c7dadb; line-height:1.6;">
+          Prototipo navegable — Proyecto I, Análisis de Sistemas.<br>
+          Cubre las 10 pantallas principales del sistema y aplica el modelo de roles
+          y permisos definido en la arquitectura del proyecto (v1.0).
+        </p>
+      </div>
+      <div class="meta-line">
+        Ambiente de demostración. Los datos de pacientes son ficticios.<br>
+        Autenticación simulada — en producción se delega al directorio institucional (supuesto A-04).
+      </div>
+    </div>
+    <div class="login-form">
+      <h5 class="mb-3">Iniciar sesión</h5>
+      <div class="mb-3">
+        <label class="form-label">Seleccione un usuario de demostración</label>
+        <div class="role-pick" id="role-pick"></div>
+      </div>
+      <div class="mb-2">
+        <label class="form-label">Usuario</label>
+        <input type="text" class="form-control form-control-sm" id="login-user" readonly>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Contraseña</label>
+        <input type="password" class="form-control form-control-sm" id="login-pass" placeholder="••••••••" value="demo1234">
+      </div>
+      <div id="login-alert" class="alert alert-danger py-2 px-3 d-none" style="font-size:.82rem;"></div>
+      <button class="btn btn-sm w-100" style="background:var(--sigh-teal-700); color:#fff;" onclick="doLogin()">Ingresar</button>
+      <button class="btn btn-sm btn-outline-secondary w-100 mt-2" onclick="simulateFailedLogin()">Simular 5 intentos fallidos</button>
+      <p class="helper-text mt-3 mb-0">
+        RNF-01 · Bloqueo temporal tras cinco intentos fallidos. Cada intento queda en la Bitácora.
+      </p>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+<script src="js/app.js"></script>
+<script>
+/* ---------------------------------------------------------
+   Lógica exclusiva de la pantalla de inicio de sesión
+--------------------------------------------------------- */
+let selectedRoleKey = null;
+
+function buildRolePicker(){
+  const wrap = document.getElementById('role-pick');
+  wrap.innerHTML = '';
+  Object.entries(ROLES).forEach(([key, r]) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'role-chip';
+    btn.textContent = r.label;
+    btn.onclick = () => selectRole(key, btn);
+    wrap.appendChild(btn);
+  });
+}
+
+function selectRole(key, btnEl){
+  selectedRoleKey = key;
+  document.querySelectorAll('.role-chip').forEach(b => b.classList.remove('active'));
+  btnEl.classList.add('active');
+  document.getElementById('login-user').value = ROLES[key].user;
+}
+
+let failCount = 0;
+function simulateFailedLogin(){
+  failCount = 5;
+  const a = document.getElementById('login-alert');
+  a.classList.remove('d-none');
+  a.textContent = 'Cuenta bloqueada temporalmente tras 5 intentos fallidos (RNF-01). Intente nuevamente en unos minutos o contacte a Informática.';
+}
+
+function doLogin(){
+  const alertEl = document.getElementById('login-alert');
+  if(!selectedRoleKey){
+    alertEl.classList.remove('d-none');
+    alertEl.textContent = 'Seleccione un usuario de demostración para continuar.';
+    return;
+  }
+  if(failCount >= 5){
+    alertEl.classList.remove('d-none');
+    alertEl.textContent = 'Esta cuenta está bloqueada temporalmente. No es posible iniciar sesión.';
+    return;
+  }
+  alertEl.classList.add('d-none');
+  setRole(selectedRoleKey);
+  logAudit('Inicio de sesión', 'Sesión iniciada correctamente', 'ok');
+  const firstAllowed = SCREENS.find(s => s.roles.includes(selectedRoleKey));
+  window.location.href = firstAllowed ? firstAllowed.file : SCREENS[0].file;
+}
+
+// Si ya hay una sesión activa (localStorage), ir directo al primer módulo permitido
+if(getRole()){
+  const r = getRole();
+  const firstAllowed = SCREENS.find(s => s.roles.includes(r));
+  window.location.href = firstAllowed ? firstAllowed.file : SCREENS[0].file;
+} else {
+  buildRolePicker();
+}
+</script>
+</body>
+</html>

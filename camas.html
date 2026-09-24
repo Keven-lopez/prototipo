@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Encamamiento — SIGH</title>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link href="css/styles.css" rel="stylesheet">
+</head>
+<body data-screen="camas">
+<div id="page-content">
+<div class="d-flex justify-content-between align-items-center mb-2">
+          <div class="d-flex gap-2">
+            <span class="badge-state st-disponible">Disponible</span>
+            <span class="badge-state st-reservada">Reservada</span>
+            <span class="badge-state st-ocupada">Ocupada</span>
+            <span class="badge-state st-limpieza">En limpieza</span>
+            <span class="badge-state st-bloqueada">Bloqueada / aislamiento</span>
+            <span class="badge-state st-fuera">Fuera de servicio</span>
+          </div>
+          <select class="form-select form-select-sm" style="width:200px;">
+            <option>Todos los servicios</option>
+            <option>Medicina Interna</option>
+            <option>Pediatría</option>
+            <option>Emergencias</option>
+          </select>
+        </div>
+        <div class="bed-grid" id="bed-grid"></div>
+        <p class="helper-text mt-3 mb-0">
+          RN-01 · Una cama solo puede tener una ocupación activa. RN-02 · Tras un egreso, la cama pasa a
+          «En limpieza» y solo Enfermería aprueba el paso a «Disponible» (los cambios de estado los aplica
+          el motor de reglas, no una edición directa — decisión D-A03).
+        </p>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+<script src="js/app.js"></script>
+<script>SIGH.boot('camas');</script>
+</body>
+</html>

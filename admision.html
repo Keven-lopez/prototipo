@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admisión — SIGH</title>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link href="css/styles.css" rel="stylesheet">
+</head>
+<body data-screen="admision">
+<div id="page-content">
+<div class="row g-3">
+          <div class="col-lg-6">
+            <div class="panel">
+              <div class="panel-head"><h2>1. Registrar / verificar paciente</h2></div>
+              <div class="panel-body">
+                <div class="mb-2">
+                  <label class="form-label mb-1">Paciente identificado</label>
+                  <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="chk-identificado" checked onchange="toggleIdentificado()">
+                    <label class="form-check-label helper-text" for="chk-identificado">Si no está identificado, se registra como «NN» y se completa después (caso alternativo P1)</label>
+                  </div>
+                </div>
+                <div class="row g-2">
+                  <div class="col-8">
+                    <label class="form-label mb-1">Nombre completo <span class="required-star">*</span></label>
+                    <input class="form-control form-control-sm" id="adm-nombre" value="María Xitumul Son">
+                  </div>
+                  <div class="col-4">
+                    <label class="form-label mb-1">DPI <span class="required-star">*</span></label>
+                    <input class="form-control form-control-sm" value="2451 88732 0801">
+                  </div>
+                </div>
+                <div class="row g-2 mt-1">
+                  <div class="col-6">
+                    <label class="form-label mb-1">Fecha de nacimiento</label>
+                    <input type="date" class="form-control form-control-sm" value="1991-04-12">
+                  </div>
+                  <div class="col-6">
+                    <label class="form-label mb-1">Responsable / contacto</label>
+                    <input class="form-control form-control-sm" value="Elena Son (madre)">
+                  </div>
+                </div>
+                <div class="alert alert-warning py-2 px-3 mt-3 mb-0" style="font-size:.8rem;">
+                  RF-01 — Ya existe un paciente con DPI similar (Marta Xitumul Son, expediente 00842). Confirme que no es un duplicado antes de continuar.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-lg-6">
+            <div class="panel">
+              <div class="panel-head"><h2>2. Crear episodio de atención</h2></div>
+              <div class="panel-body">
+                <div class="row g-2">
+                  <div class="col-6">
+                    <label class="form-label mb-1">Tipo de ingreso <span class="required-star">*</span></label>
+                    <select class="form-select form-select-sm">
+                      <option>Programado</option>
+                      <option selected>Emergencia</option>
+                      <option>Traslado externo</option>
+                    </select>
+                  </div>
+                  <div class="col-6">
+                    <label class="form-label mb-1">Servicio destino</label>
+                    <select class="form-select form-select-sm">
+                      <option>Pediatría</option>
+                      <option>Medicina Interna</option>
+                      <option>Emergencias</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="mt-2">
+                  <label class="form-label mb-1 d-flex justify-content-between">
+                    <span>Motivo de consulta / prioridad de triage</span>
+                    <span class="field-lock">🔒 Registra Enfermería o Médico — dato Sensible</span>
+                  </label>
+                  <input class="form-control form-control-sm" disabled placeholder="Fuera del alcance de Admisión (punto de coordinación #5 con Oliver)">
+                </div>
+                <button class="btn btn-sm mt-3" style="background:var(--sigh-teal-700); color:#fff;" onclick="showToast('Episodio EP-2026-0431 creado. Registrado en Bitácora.', 'ok')">
+                  Crear episodio
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+<script src="js/app.js"></script>
+<script>SIGH.boot('admision');</script>
+</body>
+</html>

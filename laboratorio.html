@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Laboratorio — SIGH</title>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link href="css/styles.css" rel="stylesheet">
+</head>
+<body data-screen="laboratorio">
+<div id="page-content">
+<div class="panel mb-3">
+          <div class="panel-head"><h2>Muestras y resultados</h2></div>
+          <div class="table-responsive">
+            <table class="table mb-0">
+              <thead><tr><th>Orden</th><th>Paciente</th><th>Estudio</th><th>Estado muestra</th><th>Resultado</th><th></th></tr></thead>
+              <tbody>
+                <tr>
+                  <td class="mono">OL-1245</td><td>Juan Pérez López</td><td>Hemograma completo</td>
+                  <td><span class="badge-state st-ocupada">En proceso</span></td>
+                  <td class="helper-text">—</td>
+                  <td><button class="btn btn-sm btn-outline-secondary" onclick="showToast('Resultado registrado como versión sin validar.', 'ok')">Registrar resultado</button></td>
+                </tr>
+                <tr class="table-danger">
+                  <td class="mono">OL-1246</td><td>María Xitumul Son</td><td>Glucosa en ayunas</td>
+                  <td><span class="badge-state st-disponible">Recibida</span></td>
+                  <td><strong>380 mg/dL</strong></td>
+                  <td><button class="btn btn-sm btn-danger" onclick="confirmCriticalAction('Validar y notificar el valor crítico de Glucosa (380 mg/dL) de María Xitumul Son')">⚠ Validar valor crítico</button></td>
+                </tr>
+                <tr>
+                  <td class="mono">OL-1240</td><td>Carlos Ramírez Ical</td><td>Cultivo de orina</td>
+                  <td><span class="badge-state st-bloqueada">Muestra rechazada</span></td>
+                  <td class="helper-text">Repetir toma</td>
+                  <td><button class="btn btn-sm btn-outline-secondary">Solicitar repetición</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <p class="helper-text mb-0">RN-07 · Un resultado validado no se elimina; cualquier corrección crea una nueva versión con trazabilidad.</p>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+<script src="js/app.js"></script>
+<script>SIGH.boot('laboratorio');</script>
+</body>
+</html>

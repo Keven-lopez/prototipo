@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Consulta — SIGH</title>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link href="css/styles.css" rel="stylesheet">
+</head>
+<body data-screen="consulta">
+<div id="page-content">
+<div class="row g-3">
+          <div class="col-lg-5">
+            <div class="panel">
+              <div class="panel-head"><h2>Paciente en consulta</h2></div>
+              <div class="panel-body">
+                <p class="mb-1"><strong>Juan Pérez López</strong> · <span class="sensitive-mask">2145xxxxx</span></p>
+                <p class="mb-1 helper-text">Episodio EP-2026-0417 · Medicina Interna · Cama HAB-101-C2</p>
+                <div class="alert alert-danger py-2 px-3 mt-2 mb-0" style="font-size:.8rem;">
+                  RF-08 — Alergia registrada: <strong>Penicilina</strong>. Verifique antes de prescribir antibióticos beta-lactámicos.
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-7">
+            <div class="panel">
+              <div class="panel-head"><h2>Nueva orden clínica</h2></div>
+              <div class="panel-body">
+                <div class="row g-2">
+                  <div class="col-6">
+                    <label class="form-label mb-1">Tipo de orden</label>
+                    <select class="form-select form-select-sm" id="orden-tipo" onchange="checkAllergy()">
+                      <option>Prescripción de medicamento</option>
+                      <option>Orden de laboratorio</option>
+                      <option>Indicación de cuidado</option>
+                    </select>
+                  </div>
+                  <div class="col-6">
+                    <label class="form-label mb-1">Prioridad</label>
+                    <select class="form-select form-select-sm">
+                      <option>Rutinaria</option>
+                      <option>Urgente</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="mt-2">
+                  <label class="form-label mb-1">Medicamento / detalle <span class="required-star">*</span></label>
+                  <input class="form-control form-control-sm" id="orden-detalle" value="Amoxicilina 500mg" onkeyup="checkAllergy()">
+                </div>
+                <div class="row g-2 mt-1">
+                  <div class="col-4">
+                    <label class="form-label mb-1">Dosis</label>
+                    <input class="form-control form-control-sm" value="500 mg">
+                  </div>
+                  <div class="col-4">
+                    <label class="form-label mb-1">Frecuencia</label>
+                    <input class="form-control form-control-sm" value="c/8h">
+                  </div>
+                  <div class="col-4">
+                    <label class="form-label mb-1">Vía</label>
+                    <input class="form-control form-control-sm" value="Oral">
+                  </div>
+                </div>
+                <div id="allergy-warning" class="alert alert-danger py-2 px-3 mt-2 mb-0" style="font-size:.8rem;">
+                  ⚠ Este medicamento pertenece a la familia de la alergia registrada (Penicilina). Confirme para continuar (RN-11 — acción crítica, requiere confirmación).
+                </div>
+                <button class="btn btn-sm mt-3" style="background:var(--sigh-teal-700); color:#fff;" onclick="confirmCriticalAction('Emitir la orden clínica de Amoxicilina 500mg a pesar de la alergia registrada')">
+                  Emitir orden
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+<script src="js/app.js"></script>
+<script>SIGH.boot('consulta');</script>
+</body>
+</html>
