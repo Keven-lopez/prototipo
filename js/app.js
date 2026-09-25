@@ -63,16 +63,22 @@ const PACIENTES_SEED = [
 ];
 
 const CAMAS_SEED = [
-  {code:"HAB-101-C1", serv:"Medicina Interna", estado:"disponible"},
-  {code:"HAB-101-C2", serv:"Medicina Interna", estado:"ocupada", pac:"Juan Pérez López"},
-  {code:"HAB-102-C1", serv:"Medicina Interna", estado:"limpieza"},
-  {code:"HAB-102-C2", serv:"Medicina Interna", estado:"bloqueada", nota:"Aislamiento"},
-  {code:"EMER-E1", serv:"Emergencias", estado:"ocupada", pac:"NN — Emergencia 08"},
-  {code:"EMER-E2", serv:"Emergencias", estado:"disponible"},
-  {code:"EMER-E3", serv:"Emergencias", estado:"fuera", nota:"Fuera de servicio"},
-  {code:"PED-201-C1", serv:"Pediatría", estado:"reservada"},
-  {code:"PED-201-C2", serv:"Pediatría", estado:"ocupada", pac:"María Xitumul Son"},
-  {code:"PED-202-C1", serv:"Pediatría", estado:"disponible"},
+  {code:"HAB-101-C1", serv:"Medicina Interna", estado:"disponible", ubic:"Edificio A · Piso 1 · Hab. 101", actualizado:"24/09 06:10"},
+  {code:"HAB-101-C2", serv:"Medicina Interna", estado:"ocupada", pac:"Juan Pérez López", ubic:"Edificio A · Piso 1 · Hab. 101", actualizado:"22/09 09:40"},
+  {code:"HAB-102-C1", serv:"Medicina Interna", estado:"limpieza", ubic:"Edificio A · Piso 1 · Hab. 102", actualizado:"24/09 07:15"},
+  {code:"HAB-102-C2", serv:"Medicina Interna", estado:"bloqueada", nota:"Aislamiento", ubic:"Edificio A · Piso 1 · Hab. 102", actualizado:"20/09 11:00"},
+  {code:"HAB-103-C1", serv:"Medicina Interna", estado:"mantenimiento", nota:"Cambio de colchón programado", ubic:"Edificio A · Piso 1 · Hab. 103", actualizado:"23/09 15:20"},
+  {code:"EMER-E1", serv:"Emergencias", estado:"ocupada", pac:"NN — Emergencia 08", ubic:"Edificio A · Planta baja · Emergencias", actualizado:"24/09 08:05"},
+  {code:"EMER-E2", serv:"Emergencias", estado:"disponible", ubic:"Edificio A · Planta baja · Emergencias", actualizado:"24/09 06:00"},
+  {code:"EMER-E3", serv:"Emergencias", estado:"fuera", nota:"Fuera de servicio", ubic:"Edificio A · Planta baja · Emergencias", actualizado:"19/09 10:30"},
+  {code:"PED-201-C1", serv:"Pediatría", estado:"reservada", ubic:"Edificio B · Piso 2 · Hab. 201", actualizado:"24/09 07:50"},
+  {code:"PED-201-C2", serv:"Pediatría", estado:"ocupada", pac:"María Xitumul Son", ubic:"Edificio B · Piso 2 · Hab. 201", actualizado:"24/09 08:00"},
+  {code:"PED-202-C1", serv:"Pediatría", estado:"disponible", ubic:"Edificio B · Piso 2 · Hab. 202", actualizado:"24/09 06:30"},
+];
+
+const ESPERA_SEED = [
+  {id:"LE-01", nombre:"Ricardo Tzul Vail", servicio:"Medicina Interna", motivo:"Ingreso programado — cirugía de vesícula", prioridad:1, desde:"24/09 06:20"},
+  {id:"LE-02", nombre:"Sofía Pérez Cano", servicio:"Pediatría", motivo:"Ingreso programado — control postquirúrgico", prioridad:2, desde:"24/09 07:05"},
 ];
 
 const BITACORA_SEED = [
@@ -102,6 +108,7 @@ function saveJSON(key, data){
 let PACIENTES = loadJSON('sigh_pacientes', PACIENTES_SEED);
 let CAMAS     = loadJSON('sigh_camas', CAMAS_SEED);
 let BITACORA  = loadJSON('sigh_bitacora', BITACORA_SEED);
+let ESPERA    = loadJSON('sigh_espera', ESPERA_SEED);
 
 function getRole(){ return localStorage.getItem('sigh_role'); }
 function setRole(key){ localStorage.setItem('sigh_role', key); }
@@ -140,9 +147,13 @@ function initShell(screenId){
             </div>
           </div>
           <div class="d-flex align-items-center gap-2">
-            <span class="env-flag">Contingencia: apagado</span>
+            <span class="env-flag" id="envFlag" onclick="toggleContingencia()">Contingencia: apagado</span>
             <span class="badge-state st-ocupada">${ROLES[role].label}</span>
           </div>
+        </div>
+        <div class="contingency-banner" id="contingencyBanner" style="display:none;">
+          <span>⚠ Modo de contingencia activo — registre en papel según el flujo AS-IS (BPMN) y capture en el SIGH al restablecer el servicio.</span>
+          <button class="btn btn-sm btn-outline-dark" onclick="toggleContingencia()">Desactivar</button>
         </div>
         <div class="content-area" id="page-content">
           ${allowed ? originalHTML : lockedMarkup(meta.label, role)}
@@ -155,6 +166,7 @@ function initShell(screenId){
   `;
 
   buildSidebar(screenId, role);
+  applyContingenciaUI();
 
   if(!allowed){
     logAudit('Intento de acceso', `Módulo ${meta.label} — sin permiso de función (nivel 1, RN-10)`, 'denied');
@@ -284,6 +296,35 @@ function logAudit(accion, detalle, resultado){
   saveJSON('sigh_bitacora', BITACORA);
 }
 
+/* ---------------------------------------------------------
+   5b. MODO DE CONTINGENCIA (RNF-12 / 6.4.2 del doc. de
+   Arquitectura: si el sistema no está disponible, se sigue
+   el flujo AS-IS con registro en papel y se captura después).
+--------------------------------------------------------- */
+function getContingencia(){ return localStorage.getItem('sigh_contingencia') === '1'; }
+function setContingencia(on){ localStorage.setItem('sigh_contingencia', on ? '1' : '0'); }
+function toggleContingencia(){
+  const on = !getContingencia();
+  setContingencia(on);
+  logAudit('Cambiar modo de contingencia',
+    on ? 'Activado — registro manual en papel (BPMN AS-IS)' : 'Desactivado — servicio restablecido, pendiente de regularización (RF-22)',
+    'ok');
+  applyContingenciaUI();
+  showToast(on
+    ? 'Modo de contingencia activado. Registre en papel y capture en el SIGH al restablecer el servicio.'
+    : 'Modo de contingencia desactivado.', on ? 'deny' : 'ok');
+}
+function applyContingenciaUI(){
+  const flag = el('envFlag');
+  const banner = el('contingencyBanner');
+  const on = getContingencia();
+  if(flag){
+    flag.textContent = on ? 'Contingencia: ACTIVA' : 'Contingencia: apagado';
+    flag.classList.toggle('on', on);
+  }
+  if(banner) banner.style.display = on ? 'flex' : 'none';
+}
+
 let pendingCritical = null;
 function confirmCriticalAction(texto){
   pendingCritical = texto;
@@ -390,10 +431,62 @@ function toggleIdentificado(){
   el('adm-nombre').value = on ? 'María Xitumul Son' : 'NN';
   el('adm-nombre').disabled = !on;
 }
+function renderEspera(){
+  const tbody = el('tbl-espera');
+  if(!tbody) return;
+  const ordenada = [...ESPERA].sort((a,b)=>a.prioridad-b.prioridad);
+  tbody.innerHTML = '';
+  if(ordenada.length === 0){
+    tbody.innerHTML = `<tr><td colspan="6" class="helper-text text-center py-3">Sin pacientes en espera.</td></tr>`;
+    return;
+  }
+  ordenada.forEach((w, i) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="mono">${i+1}</td>
+      <td>${w.nombre}</td>
+      <td>${w.servicio}</td>
+      <td class="helper-text">${w.motivo}</td>
+      <td class="helper-text">${w.desde}</td>
+      <td>
+        <button class="btn btn-sm btn-outline-secondary" onclick="subirPrioridad('${w.id}')" ${i===0?'disabled':''} aria-label="Subir prioridad">▲</button>
+        <button class="btn btn-sm btn-outline-secondary" onclick="bajarPrioridad('${w.id}')" ${i===ordenada.length-1?'disabled':''} aria-label="Bajar prioridad">▼</button>
+      </td>`;
+    tbody.appendChild(tr);
+  });
+}
+function subirPrioridad(id){
+  const ordenada = [...ESPERA].sort((a,b)=>a.prioridad-b.prioridad);
+  const i = ordenada.findIndex(w => w.id === id);
+  if(i <= 0) return;
+  const a = ESPERA.find(w=>w.id===ordenada[i].id), b = ESPERA.find(w=>w.id===ordenada[i-1].id);
+  const tmp = a.prioridad; a.prioridad = b.prioridad; b.prioridad = tmp;
+  saveJSON('sigh_espera', ESPERA);
+  logAudit('Repriorizar lista de espera', `${a.nombre} sube de prioridad`, 'ok');
+  renderEspera();
+}
+function bajarPrioridad(id){
+  const ordenada = [...ESPERA].sort((a,b)=>a.prioridad-b.prioridad);
+  const i = ordenada.findIndex(w => w.id === id);
+  if(i === -1 || i >= ordenada.length - 1) return;
+  const a = ESPERA.find(w=>w.id===ordenada[i].id), b = ESPERA.find(w=>w.id===ordenada[i+1].id);
+  const tmp = a.prioridad; a.prioridad = b.prioridad; b.prioridad = tmp;
+  saveJSON('sigh_espera', ESPERA);
+  logAudit('Repriorizar lista de espera', `${a.nombre} baja de prioridad`, 'ok');
+  renderEspera();
+}
 
 /* ---------------------------------------------------------
    8. PANTALLA: ENCAMAMIENTO / CAMAS
 --------------------------------------------------------- */
+function stLabelOf(estado){
+  return {disponible:'Disponible',ocupada:'Ocupada',reservada:'Reservada',limpieza:'En limpieza',
+          bloqueada:'Bloqueada',fuera:'Fuera de servicio',mantenimiento:'En mantenimiento'}[estado] || estado;
+}
+function nowStamp(){
+  const d = new Date();
+  return '24/09 ' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+}
 function renderCamas(){
   const grid = el('bed-grid');
   if(!grid) return;
@@ -407,68 +500,172 @@ function renderCamas(){
     grid.innerHTML = `<p class="helper-text">Sin camas para el servicio seleccionado.</p>`;
     return;
   }
+  const role = getRole();
+  const puedeModificar = ['enfermeria','admision'].includes(role);
   visibles.forEach(({c, idx}) => {
     const div = document.createElement('div');
     div.className = 'bed-card b-' + c.estado;
-    div.setAttribute('tabindex', '0');
-    div.setAttribute('role', 'button');
-    const stLabel = {disponible:'Disponible',ocupada:'Ocupada',reservada:'Reservada',limpieza:'En limpieza',bloqueada:'Bloqueada',fuera:'Fuera de servicio'}[c.estado];
-    div.setAttribute('aria-label', `Cama ${c.code}, ${c.serv}, estado ${stLabel}`);
+    const stLabel = stLabelOf(c.estado);
     div.innerHTML = `
       <div class="bed-code mono">${c.code}</div>
       <div class="bed-serv">${c.serv}</div>
+      <div class="helper-text">${c.ubic || ''}</div>
       <div class="mt-2"><span class="badge-state st-${c.estado}">${stLabel}</span></div>
       ${c.pac ? `<div class="helper-text mt-1">${c.pac}</div>` : ''}
       ${c.nota ? `<div class="helper-text mt-1">${c.nota}</div>` : ''}
+      <div class="helper-text mt-1">Actualizado: ${c.actualizado || '—'}</div>
+      <div class="bed-actions"></div>
     `;
-    div.onclick = () => handleBedClick(idx);
-    div.onkeydown = (ev) => { if(ev.key === 'Enter' || ev.key === ' '){ ev.preventDefault(); handleBedClick(idx); } };
     grid.appendChild(div);
+    const actions = div.querySelector('.bed-actions');
+    const addBtn = (label, fn, extraClass) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'btn btn-sm ' + (extraClass || 'btn-outline-secondary');
+      b.textContent = label;
+      b.onclick = (ev) => { ev.stopPropagation(); fn(idx); };
+      actions.appendChild(b);
+    };
+    if(c.estado === 'disponible'){
+      addBtn('Asignar', assignBed);
+      if(puedeModificar) addBtn('Bloquear', blockBed, 'btn-outline-danger');
+    } else if(c.estado === 'ocupada'){
+      addBtn('Alta', dischargeBed);
+      addBtn('Trasladar', startTransfer);
+    } else if(c.estado === 'limpieza'){
+      addBtn('Aprobar limpieza', approveCleaning);
+    } else if(c.estado === 'bloqueada'){
+      if(puedeModificar) addBtn('Desbloquear', unblockBed);
+    } else if(c.estado === 'reservada' && c.reservadoPara){
+      addBtn('Confirmar traslado', confirmTransfer);
+    }
+    div.onclick = () => infoBed(idx);
   });
 }
 function filterCamas(){
   renderCamas();
 }
-function handleBedClick(idx){
+function requierePermisoCama(idx, accion){
   const role = getRole();
   const c = CAMAS[idx];
   if(!['enfermeria','admision'].includes(role)){
-    logAudit('Intento de cambio de estado', c.code + ' — sin permiso', 'denied');
+    logAudit('Intento de ' + accion, c.code + ' — sin permiso', 'denied');
     showToast(`Acceso denegado: su rol no puede modificar el estado de ${c.code}. Registrado en Bitácora.`, 'deny');
+    return false;
+  }
+  return true;
+}
+function assignBed(idx){
+  if(!requierePermisoCama(idx, 'asignación de cama')) return;
+  const c = CAMAS[idx];
+  const candidatos = ESPERA.filter(w => w.servicio === c.serv).sort((a,b)=>a.prioridad-b.prioridad);
+  const siguiente = candidatos[0];
+  const nombrePac = siguiente ? siguiente.nombre : 'Paciente en espera — asignado';
+  if(confirm(`¿Asignar la cama ${c.code} a ${nombrePac}?`)){
+    c.estado = 'ocupada'; c.pac = nombrePac; c.actualizado = nowStamp();
+    saveJSON('sigh_camas', CAMAS);
+    if(siguiente){
+      ESPERA = ESPERA.filter(w => w.id !== siguiente.id);
+      saveJSON('sigh_espera', ESPERA);
+      logAudit('Asignar cama desde lista de espera', `${c.code} — ${nombrePac} (${siguiente.id})`, 'ok');
+      renderEspera();
+    } else {
+      logAudit('Asignar cama', c.code + ' — RN-01: cama estaba Disponible', 'ok');
+    }
+    renderCamas();
+    showToast(`Cama ${c.code} asignada a ${nombrePac}. Se creó OcupacionCama.`, 'ok');
+  }
+}
+function dischargeBed(idx){
+  if(!requierePermisoCama(idx, 'alta y liberación')) return;
+  const c = CAMAS[idx];
+  if(confirm(`¿Registrar alta y liberar la cama ${c.code}? Pasará a "En limpieza" (RN-02), no directo a Disponible.`)){
+    logAudit('Alta y liberación', c.code + ' — pasa a En limpieza (RN-02)', 'ok');
+    c.estado = 'limpieza'; delete c.pac; c.actualizado = nowStamp();
+    saveJSON('sigh_camas', CAMAS);
+    renderCamas();
+    showToast(`Cama ${c.code} en limpieza. Solo Enfermería puede aprobar el paso a Disponible.`, 'ok');
+  }
+}
+function approveCleaning(idx){
+  const role = getRole();
+  const c = CAMAS[idx];
+  if(role !== 'enfermeria'){
+    logAudit('Intento de aprobar limpieza', c.code + ' — sin permiso (solo Enfermería)', 'denied');
+    showToast(`Solo Enfermería puede aprobar la limpieza de ${c.code}. Registrado en Bitácora.`, 'deny');
     return;
   }
-  if(c.estado === 'disponible'){
-    if(confirm(`¿Asignar la cama ${c.code} al siguiente paciente en espera?`)){
-      c.estado = 'ocupada'; c.pac = 'Paciente en espera — asignado';
-      saveJSON('sigh_camas', CAMAS);
-      logAudit('Asignar cama', c.code + ' — RN-01: cama estaba Disponible', 'ok');
-      renderCamas();
-      showToast(`Cama ${c.code} asignada. Se creó OcupacionCama.`, 'ok');
-    }
-  } else if(c.estado === 'ocupada'){
-    if(confirm(`¿Registrar alta y liberar la cama ${c.code}? Pasará a "En limpieza" (RN-02), no directo a Disponible.`)){
-      logAudit('Alta y liberación', c.code + ' — pasa a En limpieza (RN-02)', 'ok');
-      c.estado = 'limpieza'; delete c.pac;
-      saveJSON('sigh_camas', CAMAS);
-      renderCamas();
-      showToast(`Cama ${c.code} en limpieza. Solo Enfermería puede aprobar el paso a Disponible.`, 'ok');
-    }
-  } else if(c.estado === 'limpieza'){
-    if(role !== 'enfermeria'){
-      logAudit('Intento de aprobar limpieza', c.code + ' — sin permiso (solo Enfermería)', 'denied');
-      showToast(`Solo Enfermería puede aprobar la limpieza de ${c.code}. Registrado en Bitácora.`, 'deny');
-      return;
-    }
-    if(confirm(`¿Aprobar limpieza y dejar ${c.code} como Disponible?`)){
-      c.estado = 'disponible';
-      saveJSON('sigh_camas', CAMAS);
-      logAudit('Aprobar limpieza', c.code + ' — pasa a Disponible (RN-02)', 'ok');
-      renderCamas();
-      showToast(`Cama ${c.code} disponible nuevamente.`, 'ok');
-    }
-  } else if(c.estado === 'bloqueada' || c.estado === 'fuera'){
-    showToast(`Cama ${c.code} no puede asignarse: estado "${c.estado === 'bloqueada' ? 'Bloqueada' : 'Fuera de servicio'}" (RN-01/RN-09).`, 'info');
-  } else if(c.estado === 'reservada'){
+  if(confirm(`¿Aprobar limpieza y dejar ${c.code} como Disponible?`)){
+    c.estado = 'disponible'; c.actualizado = nowStamp();
+    saveJSON('sigh_camas', CAMAS);
+    logAudit('Aprobar limpieza', c.code + ' — pasa a Disponible (RN-02)', 'ok');
+    renderCamas();
+    showToast(`Cama ${c.code} disponible nuevamente.`, 'ok');
+  }
+}
+function blockBed(idx){
+  if(!requierePermisoCama(idx, 'bloqueo de cama')) return;
+  const c = CAMAS[idx];
+  const motivo = prompt(`Motivo del bloqueo de ${c.code} (ej. aislamiento, riesgo biológico):`);
+  if(!motivo || !motivo.trim()) return;
+  c.estado = 'bloqueada'; c.nota = motivo.trim(); c.actualizado = nowStamp();
+  saveJSON('sigh_camas', CAMAS);
+  logAudit('Bloquear cama', `${c.code} · Motivo: ${motivo.trim()}`, 'ok');
+  renderCamas();
+  showToast(`Cama ${c.code} bloqueada. Registrado en Bitácora.`, 'ok');
+}
+function unblockBed(idx){
+  if(!requierePermisoCama(idx, 'desbloqueo de cama')) return;
+  const c = CAMAS[idx];
+  if(confirm(`¿Desbloquear ${c.code} y dejarla Disponible?`)){
+    c.estado = 'disponible'; delete c.nota; c.actualizado = nowStamp();
+    saveJSON('sigh_camas', CAMAS);
+    logAudit('Desbloquear cama', c.code, 'ok');
+    renderCamas();
+    showToast(`Cama ${c.code} desbloqueada.`, 'ok');
+  }
+}
+function startTransfer(idx){
+  if(!requierePermisoCama(idx, 'traslado de paciente')) return;
+  const c = CAMAS[idx];
+  const destServicio = prompt(`Trasladar a ${c.pac} de ${c.code} (${c.serv}) a qué servicio?`,
+    c.serv === 'Pediatría' ? 'Medicina Interna' : 'Pediatría');
+  if(!destServicio || !destServicio.trim()) return;
+  const destino = CAMAS.find(x => x.serv.toLowerCase() === destServicio.trim().toLowerCase() && x.estado === 'disponible');
+  if(!destino){
+    showToast(`No hay camas disponibles en ${destServicio}. Considere agregar al paciente a la lista de espera (Admisión).`, 'info');
+    return;
+  }
+  destino.estado = 'reservada';
+  destino.reservadoPara = { origenIdx: idx, pac: c.pac };
+  destino.nota = `Reservada para traslado desde ${c.code}`;
+  destino.actualizado = nowStamp();
+  saveJSON('sigh_camas', CAMAS);
+  logAudit('Reservar cama para traslado', `${destino.code} (${destino.serv}) reservada para ${c.pac} · origen ${c.code} (${c.serv})`, 'ok');
+  renderCamas();
+  showToast(`Cama ${destino.code} reservada para el traslado. Confírmelo desde esa cama cuando el paciente llegue.`, 'ok');
+}
+function confirmTransfer(idx){
+  const destino = CAMAS[idx];
+  const info = destino.reservadoPara;
+  if(!info) return;
+  if(!requierePermisoCama(idx, 'confirmación de traslado')) return;
+  const origen = CAMAS[info.origenIdx];
+  if(confirm(`¿Confirmar traslado de ${info.pac} a ${destino.code}? La cama ${origen.code} pasará a "En limpieza".`)){
+    destino.estado = 'ocupada'; destino.pac = info.pac; delete destino.reservadoPara; delete destino.nota;
+    destino.actualizado = nowStamp();
+    origen.estado = 'limpieza'; delete origen.pac; origen.actualizado = nowStamp();
+    saveJSON('sigh_camas', CAMAS);
+    logAudit('Confirmar traslado', `${info.pac} · ${origen.code} (${origen.serv}) → ${destino.code} (${destino.serv}) · RN-03: historial de ubicación conservado`, 'ok');
+    renderCamas();
+    showToast(`Traslado completado. ${destino.code} ocupada; ${origen.code} en limpieza.`, 'ok');
+  }
+}
+function infoBed(idx){
+  const c = CAMAS[idx];
+  if(c.estado === 'bloqueada' || c.estado === 'fuera' || c.estado === 'mantenimiento'){
+    showToast(`Cama ${c.code} no puede asignarse: estado "${stLabelOf(c.estado)}" (RN-01/RN-09).`, 'info');
+  } else if(c.estado === 'reservada' && !c.reservadoPara){
     showToast(`Cama ${c.code} reservada. Confirme el ingreso desde Admisión para ocuparla.`, 'info');
   }
 }
@@ -502,13 +699,45 @@ function emitirOrden(){
 function renderBitacora(){
   const tbody = el('tbl-bitacora');
   if(!tbody) return;
+  const textoEl = el('bit-filtro-texto');
+  const resEl = el('bit-filtro-resultado');
+  const texto = textoEl ? textoEl.value.trim().toLowerCase() : '';
+  const resultado = resEl ? resEl.value : '';
+  const filtradas = BITACORA.filter(row => {
+    const matchTexto = !texto || (row.u + ' ' + row.a + ' ' + row.d).toLowerCase().includes(texto);
+    const matchRes = !resultado || row.r === resultado;
+    return matchTexto && matchRes;
+  }).slice(0, 50);
   tbody.innerHTML = '';
-  BITACORA.slice(0,12).forEach(row => {
+  if(filtradas.length === 0){
+    tbody.innerHTML = `<tr><td colspan="5" class="helper-text text-center py-3">Sin resultados para el filtro aplicado.</td></tr>`;
+    return;
+  }
+  filtradas.forEach(row => {
     const tr = document.createElement('tr');
     tr.className = 'audit-row' + (row.r === 'denied' ? ' denied' : '');
     tr.innerHTML = `<td class="mono">${row.t}</td><td>${row.u}</td><td>${row.a}</td><td>${row.d}</td><td>${row.r==='denied' ? '⛔ Denegado' : '✔ Autorizado'}</td>`;
     tbody.appendChild(tr);
   });
+}
+function exportarBitacora(){
+  const role = getRole();
+  if(role !== 'auditor' && role !== 'administrador'){
+    logAudit('Intento de exportar Bitácora', 'sin permiso (solo Auditor/Administrador)', 'denied');
+    showToast('Solo Auditor o Administrador pueden exportar la Bitácora (RF-20). Registrado en Bitácora.', 'deny');
+    return;
+  }
+  const filas = [['Fecha/hora','Usuario','Acción','Detalle','Resultado']]
+    .concat(BITACORA.map(r => [r.t, r.u, r.a, r.d, r.r === 'denied' ? 'Denegado' : 'Autorizado']));
+  const csv = filas.map(f => f.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'sigh_bitacora.csv';
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+  logAudit('Exportar bitácora', 'Exportación CSV (RF-20)', 'ok');
+  showToast('Bitácora exportada como CSV. Registrado en Bitácora.', 'ok');
 }
 function renderKPIs(){
   const ocupEl = el('kpi-ocupacion');
@@ -563,6 +792,28 @@ function nuevoEmpleado(){
 }
 
 /* ---------------------------------------------------------
+   13. PANTALLA: FARMACIA — devolución de medicamento
+--------------------------------------------------------- */
+function devolverMedicamento(){
+  const sel = el('dev-orden');
+  const motivoEl = el('dev-motivo');
+  if(!sel || !motivoEl) return;
+  const motivo = motivoEl.value.trim();
+  if(!motivo){
+    alert('El motivo de la devolución es obligatorio (RN-06).');
+    return;
+  }
+  const [codigo, medicamento, paciente] = sel.value.split('|');
+  const role = getRole();
+  const responsable = role ? ROLES[role].user : 'desconocido';
+  logAudit('Devolución de medicamento',
+    `${codigo} · ${medicamento} · Paciente: ${paciente} · Responsable: ${responsable} · Motivo: ${motivo} · Documento soporte: ${codigo}`,
+    'ok');
+  showToast(`Devolución de ${medicamento} registrada en Bitácora (RN-06).`, 'ok');
+  motivoEl.value = '';
+}
+
+/* ---------------------------------------------------------
    11. INICIALIZACIÓN POR PÁGINA
    Cada página de módulo llama a: SIGH.boot('idDePantalla')
    después de que su contenido estático ya está en #page-content.
@@ -575,5 +826,6 @@ window.SIGH = {
     if(screenId === 'camas')      renderCamas();
     if(screenId === 'reportes'){  renderBitacora(); renderKPIs(); }
     if(screenId === 'consulta')   checkAllergy();
+    if(screenId === 'admision')   renderEspera();
   }
 };

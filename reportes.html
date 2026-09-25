@@ -21,6 +21,25 @@
             <h2>Bitácora de accesos y cambios</h2>
             <span class="helper-text">RF-17 — solo inserciones, sin edición ni borrado</span>
           </div>
+          <div class="panel-body pb-2" style="border-bottom:1px solid var(--sigh-line);">
+            <div class="row g-2 align-items-end">
+              <div class="col-md-5">
+                <label class="form-label mb-1">Buscar (usuario, acción, detalle)</label>
+                <input class="form-control form-control-sm" id="bit-filtro-texto" oninput="renderBitacora()" placeholder="Ej. lsay, dispensar, Amoxicilina">
+              </div>
+              <div class="col-md-3">
+                <label class="form-label mb-1">Resultado</label>
+                <select class="form-select form-select-sm" id="bit-filtro-resultado" onchange="renderBitacora()">
+                  <option value="">Todos</option>
+                  <option value="ok">Autorizado</option>
+                  <option value="denied">Denegado</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <button class="btn btn-sm w-100 btn-outline-secondary" onclick="exportarBitacora()">Exportar CSV (RF-20)</button>
+              </div>
+            </div>
+          </div>
           <div class="table-responsive">
             <table class="table mb-0">
               <thead><tr><th>Fecha/hora</th><th>Usuario</th><th>Acción</th><th>Detalle</th><th>Resultado</th></tr></thead>

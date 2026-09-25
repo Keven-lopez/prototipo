@@ -35,7 +35,7 @@
                 <div class="row g-2 mt-1">
                   <div class="col-6">
                     <label class="form-label mb-1">Fecha de nacimiento</label>
-                    <input type="date" class="form-control form-control-sm" value="1991-04-12">
+                    <input type="date" class="form-control form-control-sm" value="2018-06-03">
                   </div>
                   <div class="col-6">
                     <label class="form-label mb-1">Responsable / contacto</label>
@@ -83,6 +83,22 @@
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+
+        <div class="panel mt-3">
+          <div class="panel-head">
+            <h2>Lista de espera — sin cama disponible</h2>
+            <span class="helper-text">Escenario: ingreso programado sin cama · RF-03</span>
+          </div>
+          <div class="table-responsive">
+            <table class="table mb-0">
+              <thead><tr><th>#</th><th>Paciente</th><th>Servicio</th><th>Motivo</th><th>En espera desde</th><th>Prioridad</th></tr></thead>
+              <tbody id="tbl-espera"></tbody>
+            </table>
+          </div>
+          <div class="panel-body pt-0">
+            <p class="helper-text mb-0">Al asignar una cama disponible en Encamamiento, el sistema toma automáticamente al paciente de mayor prioridad en espera para ese servicio.</p>
           </div>
         </div>
 </div>

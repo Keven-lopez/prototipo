@@ -20,13 +20,13 @@
                   <td class="mono">OC-3381</td><td>Juan Pérez López</td><td>Amoxicilina 500mg</td>
                   <td><span class="badge-state st-bloqueada">L-032 · vence 30/11/2026</span></td>
                   <td><span class="text-warning">Pendiente validación</span></td>
-                  <td><button class="btn btn-sm btn-outline-secondary" onclick="showToast('Dispensación registrada. RN-05: se validó que el lote no está vencido ni bloqueado.', 'ok')">Validar y dispensar</button></td>
+                  <td><button class="btn btn-sm btn-outline-secondary" onclick="dispensarOrden('OC-3381','Amoxicilina 500mg','Juan Pérez López','RN-05: se validó que el lote no está vencido ni bloqueado.')">Validar y dispensar</button></td>
                 </tr>
                 <tr>
                   <td class="mono">OC-3379</td><td>NN-Emergencia-08</td><td>Suero fisiológico 1000ml</td>
                   <td><span class="badge-state st-disponible">L-051 · vence 12/2027</span></td>
                   <td><span class="text-success">Lista</span></td>
-                  <td><button class="btn btn-sm btn-outline-secondary" onclick="showToast('Dispensación registrada.', 'ok')">Validar y dispensar</button></td>
+                  <td><button class="btn btn-sm btn-outline-secondary" onclick="dispensarOrden('OC-3379','Suero fisiológico 1000ml','NN-Emergencia-08','')">Validar y dispensar</button></td>
                 </tr>
                 <tr class="table-danger">
                   <td class="mono">OC-3375</td><td>María Xitumul Son</td><td>Insulina glargina</td>
@@ -42,8 +42,31 @@
           <div class="panel-head"><h2>Lotes próximos a vencer</h2></div>
           <div class="panel-body">
             <div class="alert alert-warning py-2 px-3 mb-0" style="font-size:.82rem;">
-              RF-18 — 3 lotes vencen en los próximos 30 días (Amoxicilina L-032, Insulina L-010, Metformina L-028). Se notificó a Bodega.
+              RF-18 — 2 lotes vencen en los próximos 30 días (Amoxicilina L-032, Metformina L-028). Se notificó a Bodega. Además, el lote de Insulina L-010 ya está vencido y bloqueado para dispensación.
             </div>
+          </div>
+        </div>
+
+        <div class="panel mt-3">
+          <div class="panel-head"><h2>Devolución de medicamento</h2></div>
+          <div class="panel-body">
+            <div class="row g-2 align-items-end">
+              <div class="col-md-4">
+                <label class="form-label mb-1">Orden</label>
+                <select class="form-select form-select-sm" id="dev-orden">
+                  <option value="OC-3381|Amoxicilina 500mg|Juan Pérez López">OC-3381 · Amoxicilina 500mg · Juan Pérez López</option>
+                  <option value="OC-3379|Suero fisiológico 1000ml|NN-Emergencia-08">OC-3379 · Suero fisiológico 1000ml · NN-Emergencia-08</option>
+                </select>
+              </div>
+              <div class="col-md-5">
+                <label class="form-label mb-1">Motivo de la devolución <span class="required-star">*</span></label>
+                <input class="form-control form-control-sm" id="dev-motivo" placeholder="Ej. Suspensión de tratamiento, cambio de vía">
+              </div>
+              <div class="col-md-3">
+                <button class="btn btn-sm w-100 btn-outline-secondary" onclick="devolverMedicamento()">Registrar devolución</button>
+              </div>
+            </div>
+            <p class="helper-text mt-2 mb-0">RN-06 · La devolución identifica origen, destino, responsable, cantidad y documento soporte (orden de origen).</p>
           </div>
         </div>
 </div>
