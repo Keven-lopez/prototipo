@@ -19,8 +19,8 @@
             <span class="badge-state st-bloqueada">Bloqueada / aislamiento</span>
             <span class="badge-state st-fuera">Fuera de servicio</span>
           </div>
-          <select class="form-select form-select-sm" style="width:200px;">
-            <option>Todos los servicios</option>
+          <select class="form-select form-select-sm" id="camas-filtro-servicio" style="width:200px;" onchange="filterCamas()">
+            <option value="">Todos los servicios</option>
             <option>Medicina Interna</option>
             <option>Pediatría</option>
             <option>Emergencias</option>

@@ -128,12 +128,16 @@ function initShell(screenId){
   // Reconstruir el documento como app-shell
   document.body.innerHTML = `
     <div class="app-shell">
+      <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="toggleSidebar()"></div>
       <aside class="sidebar" id="sidebar"></aside>
       <div class="main-col">
         <div class="topbar">
-          <div>
-            <div class="screen-title">${meta.title}</div>
-            <div class="screen-sub">${meta.sub}</div>
+          <div class="d-flex align-items-center gap-2">
+            <button type="button" class="menu-toggle btn btn-sm btn-outline-secondary" onclick="toggleSidebar()" aria-label="Abrir menú">☰</button>
+            <div>
+              <div class="screen-title">${meta.title}</div>
+              <div class="screen-sub">${meta.sub}</div>
+            </div>
           </div>
           <div class="d-flex align-items-center gap-2">
             <span class="env-flag">Contingencia: apagado</span>
@@ -141,7 +145,7 @@ function initShell(screenId){
           </div>
         </div>
         <div class="content-area" id="page-content">
-          ${allowed ? originalHTML : lockedMarkup(meta.label)}
+          ${allowed ? originalHTML : lockedMarkup(meta.label, role)}
         </div>
       </div>
     </div>
@@ -158,7 +162,10 @@ function initShell(screenId){
   return allowed;
 }
 
-function lockedMarkup(label){
+function lockedMarkup(label, role){
+  const first = SCREENS.find(s => s.roles.includes(role));
+  const href = first ? first.file : 'index.html';
+  const linkLabel = first ? `Volver a ${first.label}` : 'Volver al inicio de sesión';
   return `
     <div class="panel">
       <div class="panel-body text-center py-5">
@@ -168,9 +175,14 @@ function lockedMarkup(label){
           Su rol no tiene permiso para abrir «${label}» (RN-10, autorización por función).
           Este intento quedó registrado en la Bitácora.
         </p>
-        <a href="pacientes.html" class="btn btn-sm mt-3" style="background:var(--sigh-teal-700); color:#fff;">Volver a un módulo permitido</a>
+        <a href="${href}" class="btn btn-sm mt-3" style="background:var(--sigh-teal-700); color:#fff;">${linkLabel}</a>
       </div>
     </div>`;
+}
+
+function toggleSidebar(){
+  el('sidebar').classList.toggle('open');
+  el('sidebarBackdrop').classList.toggle('open');
 }
 
 function buildSidebar(activeId, role){
@@ -316,12 +328,27 @@ function renderPacientes(){
   if(!tbody) return;
   const role = getRole();
   tbody.innerHTML = '';
-  PACIENTES.forEach(p => {
+  const textoEl = el('pac-filtro-texto');
+  const servEl = el('pac-filtro-servicio');
+  const texto = textoEl ? textoEl.value.trim().toLowerCase() : '';
+  const servicio = servEl ? servEl.value : '';
+  const lista = PACIENTES
+    .map((p, idx) => ({ p, idx }))
+    .filter(({p}) => {
+      const matchTexto = !texto || p.nombre.toLowerCase().includes(texto) || p.dpi.toLowerCase().includes(texto);
+      const matchServicio = !servicio || p.servicio === servicio;
+      return matchTexto && matchServicio;
+    });
+  if(lista.length === 0){
+    tbody.innerHTML = `<tr><td colspan="8" class="helper-text text-center py-3">Sin resultados para el filtro aplicado.</td></tr>`;
+    return;
+  }
+  lista.forEach(({p, idx}) => {
     const masked = role === 'auditor' || role === 'admision';
     const dpi = masked ? maskDpi(p.dpi) : p.dpi;
     const alergiaCell = canSeeSensible() ? p.alergias
       : (role === 'auditor'
-          ? `<span class="sensitive-mask">enmascarado</span> <a href="#" onclick="revealSensitive(event,this)" class="small">ver con justificación</a>`
+          ? `<span class="sensitive-mask">enmascarado</span> <a href="#" onclick="revealSensitive(event,this,${idx})" class="small">ver con justificación</a>`
           : `<span class="field-lock">sin acceso</span>`);
     const dxCell = canSeeSensible() ? p.dx
       : (role === 'auditor'
@@ -341,13 +368,17 @@ function renderPacientes(){
     tbody.appendChild(tr);
   });
 }
-function revealSensitive(ev, linkEl){
+function filterPacientes(){
+  renderPacientes();
+}
+function revealSensitive(ev, linkEl, idx){
   ev.preventDefault();
+  const p = PACIENTES[idx];
   const justif = prompt('Justificación para ver el dato Sensible (se registra en Bitácora):');
   if(justif && justif.trim().length > 0){
-    logAudit('Consulta de dato Sensible', 'Justificación: ' + justif, 'ok');
+    logAudit('Consulta de dato Sensible', `Alergias de ${p.nombre} · Justificación: ${justif}`, 'ok');
     showToast('Dato revelado. Consulta registrada en Bitácora con su justificación.', 'ok');
-    linkEl.closest('td').innerHTML = 'Penicilina (registro de ejemplo)';
+    linkEl.closest('td').innerHTML = p.alergias;
   }
 }
 
@@ -367,10 +398,22 @@ function renderCamas(){
   const grid = el('bed-grid');
   if(!grid) return;
   grid.innerHTML = '';
-  CAMAS.forEach((c, idx) => {
+  const servEl = el('camas-filtro-servicio');
+  const servicio = servEl ? servEl.value : '';
+  const visibles = CAMAS
+    .map((c, idx) => ({ c, idx }))
+    .filter(({c}) => !servicio || c.serv === servicio);
+  if(visibles.length === 0){
+    grid.innerHTML = `<p class="helper-text">Sin camas para el servicio seleccionado.</p>`;
+    return;
+  }
+  visibles.forEach(({c, idx}) => {
     const div = document.createElement('div');
     div.className = 'bed-card b-' + c.estado;
+    div.setAttribute('tabindex', '0');
+    div.setAttribute('role', 'button');
     const stLabel = {disponible:'Disponible',ocupada:'Ocupada',reservada:'Reservada',limpieza:'En limpieza',bloqueada:'Bloqueada',fuera:'Fuera de servicio'}[c.estado];
+    div.setAttribute('aria-label', `Cama ${c.code}, ${c.serv}, estado ${stLabel}`);
     div.innerHTML = `
       <div class="bed-code mono">${c.code}</div>
       <div class="bed-serv">${c.serv}</div>
@@ -379,8 +422,12 @@ function renderCamas(){
       ${c.nota ? `<div class="helper-text mt-1">${c.nota}</div>` : ''}
     `;
     div.onclick = () => handleBedClick(idx);
+    div.onkeydown = (ev) => { if(ev.key === 'Enter' || ev.key === ' '){ ev.preventDefault(); handleBedClick(idx); } };
     grid.appendChild(div);
   });
+}
+function filterCamas(){
+  renderCamas();
 }
 function handleBedClick(idx){
   const role = getRole();
@@ -437,9 +484,20 @@ function checkAllergy(){
   const risky = tipo.includes('medicamento') && (detalle.includes('amoxi') || detalle.includes('penicilina'));
   warnEl.style.display = risky ? 'block' : 'none';
 }
+function emitirOrden(){
+  const detEl = el('orden-detalle'), warnEl = el('allergy-warning');
+  const detalle = (detEl && detEl.value.trim()) || 'orden clínica sin detalle';
+  const risky = warnEl && warnEl.style.display !== 'none';
+  if(risky){
+    confirmCriticalAction(`Emitir la orden clínica de ${detalle} a pesar de la alergia registrada`);
+  } else {
+    logAudit('Emitir orden clínica', detalle, 'ok');
+    showToast(`Orden clínica de ${detalle} emitida y registrada en Bitácora.`, 'ok');
+  }
+}
 
 /* ---------------------------------------------------------
-   10. PANTALLA: REPORTES (Bitácora)
+   10. PANTALLA: REPORTES (Bitácora + KPIs)
 --------------------------------------------------------- */
 function renderBitacora(){
   const tbody = el('tbl-bitacora');
@@ -451,6 +509,57 @@ function renderBitacora(){
     tr.innerHTML = `<td class="mono">${row.t}</td><td>${row.u}</td><td>${row.a}</td><td>${row.d}</td><td>${row.r==='denied' ? '⛔ Denegado' : '✔ Autorizado'}</td>`;
     tbody.appendChild(tr);
   });
+}
+function renderKPIs(){
+  const ocupEl = el('kpi-ocupacion');
+  if(ocupEl){
+    const total = CAMAS.length;
+    const ocupadas = CAMAS.filter(c => c.estado === 'ocupada').length;
+    const pct = total ? Math.round((ocupadas / total) * 100) : 0;
+    ocupEl.textContent = pct + '%';
+    const subEl = el('kpi-ocupacion-sub');
+    if(subEl) subEl.textContent = `${ocupadas} de ${total} camas ocupadas`;
+  }
+  const denegEl = el('kpi-denegados');
+  if(denegEl){
+    denegEl.textContent = BITACORA.filter(b => b.r === 'denied').length;
+  }
+}
+
+/* ---------------------------------------------------------
+   12. ACCIONES QUE ANTES SOLO MOSTRABAN UN TOAST SIN REGISTRAR
+   NADA EN LA BITÁCORA (ahora sí registran, para que el mensaje
+   "registrado" que ve el usuario sea verdad).
+--------------------------------------------------------- */
+let episodioContador = 432;
+function crearEpisodio(){
+  const nombreEl = el('adm-nombre');
+  const nombre = (nombreEl && nombreEl.value.trim()) || 'paciente sin nombre';
+  const id = `EP-2026-0${episodioContador++}`;
+  logAudit('Crear episodio', `${id} · ${nombre}`, 'ok');
+  showToast(`Episodio ${id} creado para ${nombre}. Registrado en Bitácora.`, 'ok');
+}
+
+function dispensarOrden(codigo, medicamento, paciente, notaExtra){
+  const detalle = `${codigo} · ${medicamento} · ${paciente}` + (notaExtra ? ` · ${notaExtra}` : '');
+  logAudit('Dispensar medicamento', detalle, 'ok');
+  showToast(`Dispensación de ${medicamento} registrada en Bitácora.`, 'ok');
+}
+
+function registrarResultado(codigo, estudio, paciente){
+  const detalle = `${codigo} · ${estudio} · ${paciente} · versión sin validar`;
+  logAudit('Registrar resultado de laboratorio', detalle, 'ok');
+  showToast(`Resultado de ${estudio} registrado como versión sin validar. Registrado en Bitácora.`, 'ok');
+}
+
+function solicitarRepeticion(codigo, estudio, paciente){
+  const detalle = `${codigo} · ${estudio} · ${paciente}`;
+  logAudit('Solicitar repetición de muestra', detalle, 'ok');
+  showToast(`Repetición de ${estudio} solicitada. Registrado en Bitácora.`, 'ok');
+}
+
+function nuevoEmpleado(){
+  showToast('El alta de empleados no está implementada en este prototipo navegable.', 'info');
 }
 
 /* ---------------------------------------------------------
@@ -464,7 +573,7 @@ window.SIGH = {
     if(!allowed) return; // el contenido ya fue reemplazado por el mensaje de acceso denegado
     if(screenId === 'pacientes')  renderPacientes();
     if(screenId === 'camas')      renderCamas();
-    if(screenId === 'reportes')   renderBitacora();
+    if(screenId === 'reportes'){  renderBitacora(); renderKPIs(); }
     if(screenId === 'consulta')   checkAllergy();
   }
 };
