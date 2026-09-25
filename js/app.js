@@ -36,11 +36,11 @@ const SCREENS = [
     title: "Encamamiento", sub: "Camas y asignación — UC-03, UC-04 · Estados: Disponible → Reservada/Ocupada → En limpieza → Disponible",
     roles: ["enfermeria","admision","auditor"] },
   { id: "consulta",       file: "consulta.html",       ico: "🩺", label: "Consulta",
-    title: "Consulta", sub: "Órdenes clínicas y prescripción — UC-05, UC-06 · Responsable: Médico",
-    roles: ["medico"] },
+    title: "Consulta", sub: "Triage y órdenes clínicas — UC-05, UC-06 · Enfermería: triage · Médico: órdenes",
+    roles: ["medico","enfermeria"] },
   { id: "farmacia",       file: "farmacia.html",       ico: "💊", label: "Farmacia",
     title: "Farmacia", sub: "Validación, dispensación e inventario de lotes — UC-07, UC-10 · Responsable: Farmacia",
-    roles: ["farmacia","enfermeria"] },
+    roles: ["farmacia"] },
   { id: "laboratorio",    file: "laboratorio.html",    ico: "🧪", label: "Laboratorio",
     title: "Laboratorio", sub: "Muestras y resultados — UC-08, UC-09 · Responsable: Laboratorio",
     roles: ["laboratorio"] },
@@ -82,13 +82,14 @@ const ESPERA_SEED = [
 ];
 
 const BITACORA_SEED = [
-  {t:"24/09 08:12", u:"lsay (Médico)", a:"Emitir orden clínica", d:"OC-3381 · Amoxicilina · Juan Pérez López", r:"ok"},
-  {t:"24/09 07:58", u:"kixchop (Farmacia)", a:"Intento de dispensación", d:"OC-3375 · Insulina glargina · lote vencido", r:"denied"},
-  {t:"24/09 07:40", u:"rchoc (Laboratorio)", a:"Validar resultado crítico", d:"OL-1246 · Glucosa 380 mg/dL · María Xitumul Son", r:"ok"},
-  {t:"23/09 22:05", u:"acoy (Enfermería)", a:"Acceso de emergencia", d:"Consulta paciente fuera de su servicio — justificación registrada", r:"ok"},
-  {t:"23/09 21:40", u:"desconocido", a:"Inicio de sesión", d:"5 intentos fallidos — cuenta bloqueada temporalmente", r:"denied"},
-  {t:"23/09 16:12", u:"admin.rrhh (Administrador)", a:"Intento de acceso", d:"Módulo Consulta — sin permiso de función (nivel 1)", r:"denied"},
+  {id:"B-006", t:"24/09 08:12", u:"lsay (Médico)", a:"Emitir orden clínica", d:"OC-3381 · Amoxicilina · Juan Pérez López", r:"ok", origen:"10.20.4.31", sensible:true, revelado:false},
+  {id:"B-005", t:"24/09 07:58", u:"kixchop (Farmacia)", a:"Intento de dispensación", d:"OC-3375 · Insulina glargina · lote vencido", r:"denied", origen:"10.20.4.52", sensible:true, revelado:false},
+  {id:"B-004", t:"24/09 07:40", u:"rchoc (Laboratorio)", a:"Validar resultado crítico", d:"OL-1246 · Glucosa 380 mg/dL · María Xitumul Son", r:"ok", origen:"10.20.4.18", sensible:true, revelado:false},
+  {id:"B-003", t:"23/09 22:05", u:"acoy (Enfermería)", a:"Acceso de emergencia", d:"Consulta paciente fuera de su servicio — justificación registrada", r:"ok", origen:"10.20.4.09", sensible:false, revelado:false},
+  {id:"B-002", t:"23/09 21:40", u:"desconocido", a:"Inicio de sesión", d:"5 intentos fallidos — cuenta bloqueada temporalmente", r:"denied", origen:"10.20.9.114", sensible:false, revelado:false},
+  {id:"B-001", t:"23/09 16:12", u:"admin.rrhh (Administrador)", a:"Intento de acceso", d:"Módulo Consulta — sin permiso de función (nivel 1)", r:"denied", origen:"10.20.4.02", sensible:false, revelado:false},
 ];
+let bitacoraCounter = 7;
 
 /* ---------------------------------------------------------
    2. PERSISTENCIA LIGERA (solo para esta demo local)
@@ -113,6 +114,36 @@ let ESPERA    = loadJSON('sigh_espera', ESPERA_SEED);
 function getRole(){ return localStorage.getItem('sigh_role'); }
 function setRole(key){ localStorage.setItem('sigh_role', key); }
 function clearSession(){ localStorage.removeItem('sigh_role'); }
+function getSessionIP(){
+  let ip = sessionStorage.getItem('sigh_ip');
+  if(!ip){
+    ip = '10.' + (20 + Math.floor(Math.random()*40)) + '.' + Math.floor(Math.random()*255) + '.' + Math.floor(Math.random()*255);
+    sessionStorage.setItem('sigh_ip', ip);
+  }
+  return ip;
+}
+
+/* ---------------------------------------------------------
+   2b. CIERRE DE SESIÓN POR INACTIVIDAD (RNF-01, 6.4.1 del
+   documento de Arquitectura: sesiones seguras con expiración
+   por inactividad — 15 minutos).
+--------------------------------------------------------- */
+const IDLE_LIMIT_MS = 15 * 60 * 1000;
+let idleTimer = null;
+function resetIdleTimer(){
+  if(!getRole()) return;
+  if(idleTimer) clearTimeout(idleTimer);
+  idleTimer = setTimeout(() => {
+    logAudit('Cierre de sesión por inactividad', 'Se alcanzó el límite de 15 minutos sin actividad (RNF-01)', 'ok');
+    alert('Su sesión se cerró por inactividad (15 minutos, RNF-01).');
+    logout();
+  }, IDLE_LIMIT_MS);
+}
+function initIdleTimeout(){
+  ['click','keydown','mousemove','scroll','touchstart'].forEach(evt =>
+    document.addEventListener(evt, resetIdleTimer, {passive:true}));
+  resetIdleTimer();
+}
 
 function el(id){ return document.getElementById(id); }
 
@@ -125,6 +156,7 @@ function initShell(screenId){
     window.location.href = 'index.html';
     return;
   }
+  initIdleTimeout();
   const meta = SCREENS.find(s => s.id === screenId);
   const allowed = meta.roles.includes(role);
 
@@ -289,10 +321,21 @@ function showToast(msg, kind){
   new bootstrap.Toast(toastEl, {delay: 4200}).show();
 }
 
-function logAudit(accion, detalle, resultado){
+function logAudit(accion, detalle, resultado, opts){
+  opts = opts || {};
   const role = getRole();
-  const who = role ? (ROLES[role].user + ' (' + ROLES[role].label + ')') : 'desconocido';
-  BITACORA.unshift({t:'24/09 ahora', u: who, a:accion, d:detalle, r:resultado});
+  const who = opts.actor || (role ? (ROLES[role].user + ' (' + ROLES[role].label + ')') : 'desconocido');
+  BITACORA.unshift({
+    id: 'B-' + (bitacoraCounter++),
+    t: '24/09 ahora',
+    u: who,
+    a: accion,
+    d: detalle,
+    r: resultado,
+    origen: getSessionIP(),
+    sensible: !!opts.sensible,
+    revelado: false
+  });
   saveJSON('sigh_bitacora', BITACORA);
 }
 
@@ -332,7 +375,7 @@ function confirmCriticalAction(texto){
   new bootstrap.Modal(el('modalCritico')).show();
 }
 function confirmCriticalYes(){
-  logAudit('Acción crítica confirmada', pendingCritical, 'ok');
+  logAudit('Acción crítica confirmada', pendingCritical, 'ok', {sensible:true});
   bootstrap.Modal.getInstance(el('modalCritico')).hide();
   showToast('Acción confirmada y registrada en Bitácora.', 'ok');
   pendingCritical = null;
@@ -417,7 +460,7 @@ function revealSensitive(ev, linkEl, idx){
   const p = PACIENTES[idx];
   const justif = prompt('Justificación para ver el dato Sensible (se registra en Bitácora):');
   if(justif && justif.trim().length > 0){
-    logAudit('Consulta de dato Sensible', `Alergias de ${p.nombre} · Justificación: ${justif}`, 'ok');
+    logAudit('Consulta de dato Sensible', `Alergias de ${p.nombre} · Justificación: ${justif}`, 'ok', {sensible:true});
     showToast('Dato revelado. Consulta registrada en Bitácora con su justificación.', 'ok');
     linkEl.closest('td').innerHTML = p.alergias;
   }
@@ -681,6 +724,29 @@ function checkAllergy(){
   const risky = tipo.includes('medicamento') && (detalle.includes('amoxi') || detalle.includes('penicilina'));
   warnEl.style.display = risky ? 'block' : 'none';
 }
+function applyConsultaRoleView(){
+  const role = getRole();
+  const ordenPanel = el('panel-orden');
+  const triagePanel = el('panel-triage');
+  if(ordenPanel) ordenPanel.style.display = (role === 'medico') ? '' : 'none';
+  if(triagePanel) triagePanel.style.display = (role === 'enfermeria') ? '' : 'none';
+}
+function registrarTriage(){
+  const prioridadEl = el('triage-prioridad');
+  const signosEl = el('triage-signos');
+  const motivoEl = el('triage-motivo');
+  const motivo = motivoEl ? motivoEl.value.trim() : '';
+  if(!motivo){
+    alert('El motivo de consulta es obligatorio.');
+    return;
+  }
+  const prioridad = prioridadEl ? prioridadEl.value : '';
+  const signos = signosEl ? signosEl.value.trim() : '';
+  logAudit('Registrar triage', `Prioridad ${prioridad} · Motivo: ${motivo}` + (signos ? ` · Signos: ${signos}` : ''), 'ok', {sensible:true});
+  showToast('Triage registrado. Visible para el Médico en el expediente.', 'ok');
+  motivoEl.value = '';
+  if(signosEl) signosEl.value = '';
+}
 function emitirOrden(){
   const detEl = el('orden-detalle'), warnEl = el('allergy-warning');
   const detalle = (detEl && detEl.value.trim()) || 'orden clínica sin detalle';
@@ -688,7 +754,7 @@ function emitirOrden(){
   if(risky){
     confirmCriticalAction(`Emitir la orden clínica de ${detalle} a pesar de la alergia registrada`);
   } else {
-    logAudit('Emitir orden clínica', detalle, 'ok');
+    logAudit('Emitir orden clínica', detalle, 'ok', {sensible:true});
     showToast(`Orden clínica de ${detalle} emitida y registrada en Bitácora.`, 'ok');
   }
 }
@@ -699,6 +765,7 @@ function emitirOrden(){
 function renderBitacora(){
   const tbody = el('tbl-bitacora');
   if(!tbody) return;
+  const role = getRole();
   const textoEl = el('bit-filtro-texto');
   const resEl = el('bit-filtro-resultado');
   const texto = textoEl ? textoEl.value.trim().toLowerCase() : '';
@@ -710,15 +777,51 @@ function renderBitacora(){
   }).slice(0, 50);
   tbody.innerHTML = '';
   if(filtradas.length === 0){
-    tbody.innerHTML = `<tr><td colspan="5" class="helper-text text-center py-3">Sin resultados para el filtro aplicado.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6" class="helper-text text-center py-3">Sin resultados para el filtro aplicado.</td></tr>`;
     return;
   }
   filtradas.forEach(row => {
     const tr = document.createElement('tr');
     tr.className = 'audit-row' + (row.r === 'denied' ? ' denied' : '');
-    tr.innerHTML = `<td class="mono">${row.t}</td><td>${row.u}</td><td>${row.a}</td><td>${row.d}</td><td>${row.r==='denied' ? '⛔ Denegado' : '✔ Autorizado'}</td>`;
+    let detalleCell = row.d;
+    // RNF-02 / 6.6.7: el Administrador nunca ve información clínica; el Auditor la ve
+    // enmascarada y solo la revela dejando una justificación (mismo patrón que Pacientes).
+    if(row.sensible && role === 'administrador'){
+      detalleCell = `<span class="field-lock">dato clínico oculto — el Administrador no tiene acceso a información clínica (RNF-02)</span>`;
+    } else if(row.sensible && role === 'auditor' && !row.revelado){
+      detalleCell = `<span class="sensitive-mask">enmascarado</span> <a href="#" onclick="revealBitacora(event,'${row.id}')" class="small">ver con justificación</a>`;
+    }
+    tr.innerHTML = `<td class="mono">${row.t}</td><td>${row.u}</td><td class="mono">${row.origen || '—'}</td><td>${row.a}</td><td>${detalleCell}</td><td>${row.r==='denied' ? '⛔ Denegado' : '✔ Autorizado'}</td>`;
     tbody.appendChild(tr);
   });
+}
+function revealBitacora(ev, id){
+  ev.preventDefault();
+  const row = BITACORA.find(r => r.id === id);
+  if(!row) return;
+  const justif = prompt('Justificación para ver este dato clínico en la Bitácora (se registra):');
+  if(justif && justif.trim()){
+    row.revelado = true;
+    saveJSON('sigh_bitacora', BITACORA);
+    logAudit('Consulta de dato clínico en Bitácora', `Registro ${row.id} · Justificación: ${justif.trim()}`, 'ok');
+    showToast('Dato revelado con justificación. Consulta registrada en Bitácora.', 'ok');
+    renderBitacora();
+  }
+}
+// Normaliza el texto para el CSV: quita tildes decorativas de puntuación (·, —, emojis)
+// que Excel muestra mal en algunas configuraciones regionales; conserva acentos y ñ.
+function csvSafe(v){
+  const cleaned = String(v)
+    .normalize('NFC')
+    .replace(/[·•]/g, '-')
+    .replace(/[—–]/g, '-')
+    .replace(/[⛔✔⚠🔒]/g, '')
+    .replace(/…/g, '...')
+    .replace(/[“”]/g, '"')
+    .replace(/[‘’]/g, "'")
+    .replace(/\s+/g, ' ')
+    .trim();
+  return `"${cleaned.replace(/"/g, '""')}"`;
 }
 function exportarBitacora(){
   const role = getRole();
@@ -727,16 +830,26 @@ function exportarBitacora(){
     showToast('Solo Auditor o Administrador pueden exportar la Bitácora (RF-20). Registrado en Bitácora.', 'deny');
     return;
   }
-  const filas = [['Fecha/hora','Usuario','Acción','Detalle','Resultado']]
-    .concat(BITACORA.map(r => [r.t, r.u, r.a, r.d, r.r === 'denied' ? 'Denegado' : 'Autorizado']));
-  const csv = filas.map(f => f.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const esAdmin = role === 'administrador';
+  const encabezado = ['Fecha/hora','Usuario','Origen (IP)','Accion','Detalle','Resultado'];
+  const filas = [encabezado].concat(BITACORA.map(r => [
+    r.t,
+    r.u,
+    r.origen || '-',
+    r.a,
+    (r.sensible && esAdmin) ? 'Dato clinico oculto (RNF-02)' : r.d,
+    r.r === 'denied' ? 'Denegado' : 'Autorizado'
+  ]));
+  // BOM UTF-8 al inicio para que Excel interprete correctamente acentos y ñ;
+  // los caracteres decorativos (·, —, emojis) ya se normalizaron en csvSafe().
+  const csv = '\uFEFF' + filas.map(f => f.map(csvSafe).join(',')).join('\r\n');
   const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url; a.download = 'sigh_bitacora.csv';
   document.body.appendChild(a); a.click(); a.remove();
   URL.revokeObjectURL(url);
-  logAudit('Exportar bitácora', 'Exportación CSV (RF-20)', 'ok');
+  logAudit('Exportar bitácora', 'Exportación CSV (RF-20)' + (esAdmin ? ' — datos clínicos excluidos' : ''), 'ok');
   showToast('Bitácora exportada como CSV. Registrado en Bitácora.', 'ok');
 }
 function renderKPIs(){
@@ -769,26 +882,67 @@ function crearEpisodio(){
   showToast(`Episodio ${id} creado para ${nombre}. Registrado en Bitácora.`, 'ok');
 }
 
+function medicamentoConflictaAlergia(medicamento, alergias){
+  if(!alergias || alergias === 'Ninguna registrada' || alergias === '—' || alergias === 'Sin registro') return false;
+  const med = (medicamento || '').toLowerCase();
+  const alerg = alergias.toLowerCase();
+  if(alerg.includes('penicilina') && (med.includes('amoxi') || med.includes('penicilina'))) return true;
+  return false;
+}
+function renderFarmaciaAlergias(){
+  document.querySelectorAll('[data-alergia-cell]').forEach(td => {
+    const tr = td.closest('tr');
+    const nombre = tr.getAttribute('data-paciente');
+    const medicamento = tr.getAttribute('data-medicamento') || '';
+    const p = PACIENTES.find(x => x.nombre === nombre);
+    const alergias = p ? p.alergias : 'Sin registro';
+    const conflicto = medicamentoConflictaAlergia(medicamento, alergias);
+    td.innerHTML = conflicto ? `<span class="text-danger fw-semibold">⚠ ${alergias}</span>` : alergias;
+  });
+}
 function dispensarOrden(codigo, medicamento, paciente, notaExtra){
+  const p = PACIENTES.find(x => x.nombre === paciente);
+  const alergias = p ? p.alergias : null;
+  if(medicamentoConflictaAlergia(medicamento, alergias)){
+    confirmCriticalAction(`Dispensar ${medicamento} a ${paciente} a pesar de su alergia registrada (${alergias}) — RN-11`);
+    return;
+  }
   const detalle = `${codigo} · ${medicamento} · ${paciente}` + (notaExtra ? ` · ${notaExtra}` : '');
-  logAudit('Dispensar medicamento', detalle, 'ok');
+  logAudit('Dispensar medicamento', detalle, 'ok', {sensible:true});
   showToast(`Dispensación de ${medicamento} registrada en Bitácora.`, 'ok');
 }
 
 function registrarResultado(codigo, estudio, paciente){
   const detalle = `${codigo} · ${estudio} · ${paciente} · versión sin validar`;
-  logAudit('Registrar resultado de laboratorio', detalle, 'ok');
+  logAudit('Registrar resultado de laboratorio', detalle, 'ok', {sensible:true});
   showToast(`Resultado de ${estudio} registrado como versión sin validar. Registrado en Bitácora.`, 'ok');
 }
 
 function solicitarRepeticion(codigo, estudio, paciente){
   const detalle = `${codigo} · ${estudio} · ${paciente}`;
-  logAudit('Solicitar repetición de muestra', detalle, 'ok');
+  logAudit('Solicitar repetición de muestra', detalle, 'ok', {sensible:true});
   showToast(`Repetición de ${estudio} solicitada. Registrado en Bitácora.`, 'ok');
 }
 
 function nuevoEmpleado(){
   showToast('El alta de empleados no está implementada en este prototipo navegable.', 'info');
+}
+function applyAdministracionRoleView(){
+  const role = getRole();
+  if(role !== 'mantenimiento') return;
+  const nuevoBtn = el('btn-nuevo-empleado');
+  if(nuevoBtn){
+    nuevoBtn.disabled = true;
+    nuevoBtn.title = 'Solo Administrador puede dar de alta empleados (Tabla 6.11)';
+    nuevoBtn.style.opacity = '.5';
+  }
+  document.querySelectorAll('.btn-editar-rol').forEach(btn => {
+    btn.disabled = true;
+    btn.textContent = 'Solo lectura';
+    btn.title = 'Mantenimiento tiene acceso de solo lectura a Empleado (Tabla 6.11)';
+  });
+  const nota = el('nota-solo-lectura');
+  if(nota) nota.style.display = 'block';
 }
 
 /* ---------------------------------------------------------
@@ -808,7 +962,7 @@ function devolverMedicamento(){
   const responsable = role ? ROLES[role].user : 'desconocido';
   logAudit('Devolución de medicamento',
     `${codigo} · ${medicamento} · Paciente: ${paciente} · Responsable: ${responsable} · Motivo: ${motivo} · Documento soporte: ${codigo}`,
-    'ok');
+    'ok', {sensible:true});
   showToast(`Devolución de ${medicamento} registrada en Bitácora (RN-06).`, 'ok');
   motivoEl.value = '';
 }
@@ -825,7 +979,9 @@ window.SIGH = {
     if(screenId === 'pacientes')  renderPacientes();
     if(screenId === 'camas')      renderCamas();
     if(screenId === 'reportes'){  renderBitacora(); renderKPIs(); }
-    if(screenId === 'consulta')   checkAllergy();
+    if(screenId === 'consulta'){  checkAllergy(); applyConsultaRoleView(); }
     if(screenId === 'admision')   renderEspera();
+    if(screenId === 'farmacia')   renderFarmaciaAlergias();
+    if(screenId === 'administracion') applyAdministracionRoleView();
   }
 };

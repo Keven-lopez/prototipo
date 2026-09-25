@@ -45,6 +45,7 @@
       <button class="btn btn-sm btn-outline-secondary w-100 mt-2" onclick="simulateFailedLogin()">Simular 5 intentos fallidos</button>
       <p class="helper-text mt-3 mb-0">
         RNF-01 · Bloqueo temporal tras cinco intentos fallidos. Cada intento queda en la Bitácora.
+        Administrador y Auditor requieren verificación en dos pasos.
       </p>
     </div>
   </div>
@@ -84,6 +85,8 @@ function simulateFailedLogin(){
   const a = document.getElementById('login-alert');
   a.classList.remove('d-none');
   a.textContent = 'Cuenta bloqueada temporalmente tras 5 intentos fallidos (RNF-01). Intente nuevamente en unos minutos o contacte a Informática.';
+  const actor = selectedRoleKey ? (ROLES[selectedRoleKey].user + ' (intento, ' + ROLES[selectedRoleKey].label + ')') : 'desconocido';
+  logAudit('Inicio de sesión', '5 intentos fallidos consecutivos — cuenta bloqueada temporalmente (RNF-01)', 'denied', {actor});
 }
 
 function doLogin(){
@@ -96,11 +99,28 @@ function doLogin(){
   if(failCount >= 5){
     alertEl.classList.remove('d-none');
     alertEl.textContent = 'Esta cuenta está bloqueada temporalmente. No es posible iniciar sesión.';
+    logAudit('Intento de inicio de sesión', `Usuario ${ROLES[selectedRoleKey].user} — cuenta bloqueada`, 'denied',
+      {actor: ROLES[selectedRoleKey].user + ' (' + ROLES[selectedRoleKey].label + ')'});
     return;
   }
   alertEl.classList.add('d-none');
+
+  // RNF-01 — verificación en dos pasos para Administrador y Auditor (roles con mayor alcance).
+  const requiere2FA = selectedRoleKey === 'administrador' || selectedRoleKey === 'auditor';
+  const actor = ROLES[selectedRoleKey].user + ' (' + ROLES[selectedRoleKey].label + ')';
+  if(requiere2FA){
+    const codigo = prompt('Verificación en dos pasos requerida para ' + ROLES[selectedRoleKey].label + ' (RNF-01).\nIngrese el código enviado (demo: 123456):');
+    if(codigo !== '123456'){
+      alertEl.classList.remove('d-none');
+      alertEl.textContent = 'Código de verificación incorrecto. Inicio de sesión cancelado.';
+      logAudit('Verificación en dos pasos', `Código incorrecto para ${ROLES[selectedRoleKey].user}`, 'denied', {actor});
+      return;
+    }
+    logAudit('Verificación en dos pasos', `Código correcto para ${ROLES[selectedRoleKey].user}`, 'ok', {actor});
+  }
+
   setRole(selectedRoleKey);
-  logAudit('Inicio de sesión', 'Sesión iniciada correctamente', 'ok');
+  logAudit('Inicio de sesión', 'Sesión iniciada correctamente' + (requiere2FA ? ' con verificación en dos pasos' : ''), 'ok');
   const firstAllowed = SCREENS.find(s => s.roles.includes(selectedRoleKey));
   window.location.href = firstAllowed ? firstAllowed.file : SCREENS[0].file;
 }

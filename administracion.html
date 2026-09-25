@@ -13,17 +13,20 @@
 <div class="panel mb-3">
           <div class="panel-head">
             <h2>Empleados y roles</h2>
-            <button class="btn btn-sm" style="background:var(--sigh-teal-700); color:#fff;" onclick="nuevoEmpleado()">+ Nuevo empleado</button>
+            <button class="btn btn-sm" id="btn-nuevo-empleado" style="background:var(--sigh-teal-700); color:#fff;" onclick="nuevoEmpleado()">+ Nuevo empleado</button>
           </div>
           <div class="table-responsive">
             <table class="table mb-0">
               <thead><tr><th>Empleado</th><th>Usuario</th><th>Rol</th><th>Servicio</th><th>Estado</th><th></th></tr></thead>
               <tbody>
-                <tr><td>Ana Beatriz Coy</td><td class="mono">acoy</td><td>Enfermería</td><td>Medicina Interna</td><td><span class="badge-state st-disponible">Activo</span></td><td><button class="btn btn-sm btn-outline-secondary" onclick="confirmCriticalAction('Cambiar el rol de Ana Beatriz Coy')">Editar rol</button></td></tr>
-                <tr><td>Dr. Luis Fernando Say</td><td class="mono">lsay</td><td>Médico</td><td>Medicina Interna</td><td><span class="badge-state st-disponible">Activo</span></td><td><button class="btn btn-sm btn-outline-secondary" onclick="confirmCriticalAction('Cambiar el rol de Luis Fernando Say')">Editar rol</button></td></tr>
-                <tr><td>Karla Ixchop</td><td class="mono">kixchop</td><td>Farmacia</td><td>Farmacia central</td><td><span class="badge-state st-fuera">Inactivo</span></td><td><button class="btn btn-sm btn-outline-secondary" disabled>Editar rol</button></td></tr>
+                <tr><td>Ana Beatriz Coy</td><td class="mono">acoy</td><td>Enfermería</td><td>Medicina Interna</td><td><span class="badge-state st-disponible">Activo</span></td><td><button class="btn btn-sm btn-outline-secondary btn-editar-rol" onclick="confirmCriticalAction('Cambiar el rol de Ana Beatriz Coy')">Editar rol</button></td></tr>
+                <tr><td>Dr. Luis Fernando Say</td><td class="mono">lsay</td><td>Médico</td><td>Medicina Interna</td><td><span class="badge-state st-disponible">Activo</span></td><td><button class="btn btn-sm btn-outline-secondary btn-editar-rol" onclick="confirmCriticalAction('Cambiar el rol de Luis Fernando Say')">Editar rol</button></td></tr>
+                <tr><td>Karla Ixchop</td><td class="mono">kixchop</td><td>Farmacia</td><td>Farmacia central</td><td><span class="badge-state st-fuera">Inactivo</span></td><td><button class="btn btn-sm btn-outline-secondary btn-editar-rol" disabled>Editar rol</button></td></tr>
               </tbody>
             </table>
+          </div>
+          <div class="panel-body pt-0 pb-2" id="nota-solo-lectura" style="display:none;">
+            <p class="helper-text mb-0">Mantenimiento tiene acceso de solo lectura a Empleado y Servicio (Tabla 6.11 del documento de Arquitectura y Seguridad); solo Administrador puede editar roles o dar de alta empleados.</p>
           </div>
         </div>
         <div class="row g-3">

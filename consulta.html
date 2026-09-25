@@ -23,7 +23,7 @@
               </div>
             </div>
           </div>
-          <div class="col-lg-7">
+          <div class="col-lg-7" id="panel-orden">
             <div class="panel">
               <div class="panel-head"><h2>Nueva orden clínica</h2></div>
               <div class="panel-body">
@@ -68,6 +68,38 @@
                 <button class="btn btn-sm mt-3" style="background:var(--sigh-teal-700); color:#fff;" onclick="emitirOrden()">
                   Emitir orden
                 </button>
+                <p class="helper-text mt-2 mb-0">RN-04 · Órdenes clínicas: autor autorizado — Médico.</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-7" id="panel-triage" style="display:none;">
+            <div class="panel">
+              <div class="panel-head"><h2>Registrar triage</h2></div>
+              <div class="panel-body">
+                <div class="row g-2">
+                  <div class="col-6">
+                    <label class="form-label mb-1">Prioridad de triage <span class="required-star">*</span></label>
+                    <select class="form-select form-select-sm" id="triage-prioridad">
+                      <option>I — Resucitación</option>
+                      <option>II — Emergencia</option>
+                      <option selected>III — Urgente</option>
+                      <option>IV — Urgencia menor</option>
+                      <option>V — Sin urgencia</option>
+                    </select>
+                  </div>
+                  <div class="col-6">
+                    <label class="form-label mb-1">Signos vitales (resumen)</label>
+                    <input class="form-control form-control-sm" id="triage-signos" placeholder="Ej. FC 88, TA 120/80, SpO2 97%">
+                  </div>
+                </div>
+                <div class="mt-2">
+                  <label class="form-label mb-1">Motivo de consulta <span class="required-star">*</span></label>
+                  <textarea class="form-control form-control-sm" id="triage-motivo" rows="2" placeholder="Motivo referido por el paciente o responsable"></textarea>
+                </div>
+                <button class="btn btn-sm mt-3" style="background:var(--sigh-teal-700); color:#fff;" onclick="registrarTriage()">
+                  Registrar triage
+                </button>
+                <p class="helper-text mt-2 mb-0">RF-05 · Dato Sensible — registra Enfermería o Médico (RN-10). Queda visible para el Médico en el expediente.</p>
               </div>
             </div>
           </div>

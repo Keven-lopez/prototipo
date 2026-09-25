@@ -14,22 +14,22 @@
           <div class="panel-head"><h2>Órdenes pendientes de dispensación</h2></div>
           <div class="table-responsive">
             <table class="table mb-0">
-              <thead><tr><th>Orden</th><th>Paciente</th><th>Medicamento</th><th>Lote sugerido</th><th>Estado</th><th></th></tr></thead>
+              <thead><tr><th>Orden</th><th>Paciente</th><th>Alergias</th><th>Medicamento</th><th>Lote sugerido</th><th>Estado</th><th></th></tr></thead>
               <tbody>
-                <tr>
-                  <td class="mono">OC-3381</td><td>Juan Pérez López</td><td>Amoxicilina 500mg</td>
+                <tr data-paciente="Juan Pérez López" data-medicamento="Amoxicilina 500mg">
+                  <td class="mono">OC-3381</td><td>Juan Pérez López</td><td class="mono" data-alergia-cell>…</td><td>Amoxicilina 500mg</td>
                   <td><span class="badge-state st-bloqueada">L-032 · vence 30/11/2026</span></td>
                   <td><span class="text-warning">Pendiente validación</span></td>
                   <td><button class="btn btn-sm btn-outline-secondary" onclick="dispensarOrden('OC-3381','Amoxicilina 500mg','Juan Pérez López','RN-05: se validó que el lote no está vencido ni bloqueado.')">Validar y dispensar</button></td>
                 </tr>
-                <tr>
-                  <td class="mono">OC-3379</td><td>NN-Emergencia-08</td><td>Suero fisiológico 1000ml</td>
+                <tr data-paciente="NN — Emergencia 08" data-medicamento="Suero fisiológico 1000ml">
+                  <td class="mono">OC-3379</td><td>NN — Emergencia 08</td><td class="mono" data-alergia-cell>…</td><td>Suero fisiológico 1000ml</td>
                   <td><span class="badge-state st-disponible">L-051 · vence 12/2027</span></td>
                   <td><span class="text-success">Lista</span></td>
-                  <td><button class="btn btn-sm btn-outline-secondary" onclick="dispensarOrden('OC-3379','Suero fisiológico 1000ml','NN-Emergencia-08','')">Validar y dispensar</button></td>
+                  <td><button class="btn btn-sm btn-outline-secondary" onclick="dispensarOrden('OC-3379','Suero fisiológico 1000ml','NN — Emergencia 08','')">Validar y dispensar</button></td>
                 </tr>
-                <tr class="table-danger">
-                  <td class="mono">OC-3375</td><td>María Xitumul Son</td><td>Insulina glargina</td>
+                <tr class="table-danger" data-paciente="María Xitumul Son" data-medicamento="Insulina glargina">
+                  <td class="mono">OC-3375</td><td>María Xitumul Son</td><td class="mono" data-alergia-cell>…</td><td>Insulina glargina</td>
                   <td><span class="badge-state st-bloqueada">L-010 · vencido 02/09/2026</span></td>
                   <td><span class="text-danger fw-semibold">Bloqueada — RN-05</span></td>
                   <td><button class="btn btn-sm btn-outline-danger" disabled title="No puede dispensarse: lote vencido">Bloqueado</button></td>
@@ -55,7 +55,7 @@
                 <label class="form-label mb-1">Orden</label>
                 <select class="form-select form-select-sm" id="dev-orden">
                   <option value="OC-3381|Amoxicilina 500mg|Juan Pérez López">OC-3381 · Amoxicilina 500mg · Juan Pérez López</option>
-                  <option value="OC-3379|Suero fisiológico 1000ml|NN-Emergencia-08">OC-3379 · Suero fisiológico 1000ml · NN-Emergencia-08</option>
+                  <option value="OC-3379|Suero fisiológico 1000ml|NN — Emergencia 08">OC-3379 · Suero fisiológico 1000ml · NN — Emergencia 08</option>
                 </select>
               </div>
               <div class="col-md-5">
